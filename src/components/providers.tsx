@@ -1,0 +1,67 @@
+"use client"
+
+import { useState } from "react"
+
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
+import { Toaster } from "sonner"
+
+import { GlobalMutationOverlay } from "@/components/global-mutation-overlay"
+import { LiffProvider } from "@/components/liff-provider"
+
+interface ProvidersProps {
+  children: React.ReactNode
+}
+
+const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID ?? ""
+
+// cache 結構有不相容變動時（例如 query key 格式改變）記得手動升版，
+// buster 不同時 persist 套件會自動丟棄舊快取，避免舊格式資料造成執行期錯誤。
+const PERSIST_BUSTER = "v1"
+const PERSIST_MAX_AGE = 24 * 60 * 60 * 1000
+
+// SSR 階段沒有 window/localStorage，此時回傳 undefined，Providers 改走不 persist 的 fallback。
+function createPersister() {
+  if (typeof window === "undefined") return undefined
+  return createSyncStoragePersister({
+    storage: window.localStorage,
+    key: "aa-split-query-cache",
+  })
+}
+
+export function Providers({ children }: ProvidersProps) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 60 * 1000,
+            gcTime: PERSIST_MAX_AGE,
+          },
+        },
+      }),
+  )
+  const [persister] = useState(createPersister)
+
+  const inner = (
+    <>
+      <LiffProvider liffId={LIFF_ID}>{children}</LiffProvider>
+      <GlobalMutationOverlay />
+      <Toaster position="top-center" />
+    </>
+  )
+
+  if (!persister) {
+    return <QueryClientProvider client={queryClient}>{inner}</QueryClientProvider>
+  }
+
+  return (
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister, maxAge: PERSIST_MAX_AGE, buster: PERSIST_BUSTER }}
+    >
+      {inner}
+    </PersistQueryClientProvider>
+  )
+}
