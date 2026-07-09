@@ -11,17 +11,17 @@ import { LiffProvider } from "../liff-provider"
 describe("LiffProvider — local 環境", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_ENV", "local")
-    useAuthStore.setState({ user: null, isLoading: true })
+    useAuthStore.setState({ user: null, status: "loading" })
   })
 
-  it("bootstrap 後 isLoading 應為 false", async () => {
+  it("bootstrap 後 status 應為 authenticated", async () => {
     render(
       <LiffProvider liffId="">
         <div />
       </LiffProvider>,
     )
     await vi.waitFor(() => {
-      expect(useAuthStore.getState().isLoading).toBe(false)
+      expect(useAuthStore.getState().status).toBe("authenticated")
     })
   })
 
@@ -79,17 +79,17 @@ describe("LiffProvider — production 環境未覆蓋路徑", () => {
 describe("LiffProvider — LIFF_ID 未設定（非 local 環境）", () => {
   beforeEach(() => {
     vi.stubEnv("NEXT_PUBLIC_ENV", "production")
-    useAuthStore.setState({ user: null, isLoading: true })
+    useAuthStore.setState({ user: null, status: "loading" })
   })
 
-  it("liffId 為空字串時，isLoading 應為 false（不永久卡住）", async () => {
+  it("liffId 為空字串時，status 應為 out-of-client（不永久卡住）", async () => {
     render(
       <LiffProvider liffId="">
         <div />
       </LiffProvider>,
     )
     await vi.waitFor(() => {
-      expect(useAuthStore.getState().isLoading).toBe(false)
+      expect(useAuthStore.getState().status).toBe("out-of-client")
     })
   })
 })

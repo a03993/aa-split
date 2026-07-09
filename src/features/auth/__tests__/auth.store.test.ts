@@ -11,35 +11,35 @@ const mockUser = {
 
 describe("auth.store", () => {
   beforeEach(() => {
-    useAuthStore.setState({ user: null, isLoading: true, isInitialized: false })
+    useAuthStore.setState({ user: null, status: "loading" })
   })
 
-  it("初始狀態：isLoading 為 true、user 為 null、isInitialized 為 false", () => {
+  it("初始狀態：status 為 loading、user 為 null", () => {
     const state = useAuthStore.getState()
-    expect(state.isLoading).toBe(true)
+    expect(state.status).toBe("loading")
     expect(state.user).toBeNull()
-    expect(state.isInitialized).toBe(false)
   })
 
-  it("setUser(user) 後 user 有值、isLoading 為 false、isInitialized 為 true", () => {
-    useAuthStore.getState().setUser(mockUser)
+  it("setAuthenticated(user) 後 user 有值、status 為 authenticated", () => {
+    useAuthStore.getState().setAuthenticated(mockUser)
     const state = useAuthStore.getState()
     expect(state.user).toEqual(mockUser)
-    expect(state.isLoading).toBe(false)
-    expect(state.isInitialized).toBe(true)
+    expect(state.status).toBe("authenticated")
   })
 
-  it("setUser(null) 後 user 為 null、isLoading 為 false、isInitialized 為 true", () => {
-    useAuthStore.getState().setUser(mockUser)
-    useAuthStore.getState().setUser(null)
+  it("setRedirecting() 後 user 為 null、status 為 redirecting", () => {
+    useAuthStore.getState().setAuthenticated(mockUser)
+    useAuthStore.getState().setRedirecting()
     const state = useAuthStore.getState()
     expect(state.user).toBeNull()
-    expect(state.isLoading).toBe(false)
-    expect(state.isInitialized).toBe(true)
+    expect(state.status).toBe("redirecting")
   })
 
-  it("setLoading(false) 後 isLoading 為 false", () => {
-    useAuthStore.getState().setLoading(false)
-    expect(useAuthStore.getState().isLoading).toBe(false)
+  it("setOutOfClient() 後 user 為 null、status 為 out-of-client", () => {
+    useAuthStore.getState().setAuthenticated(mockUser)
+    useAuthStore.getState().setOutOfClient()
+    const state = useAuthStore.getState()
+    expect(state.user).toBeNull()
+    expect(state.status).toBe("out-of-client")
   })
 })

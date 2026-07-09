@@ -16,11 +16,12 @@ interface LiffProviderProps {
 /**
  * 掛載時啟動 LIFF + LINE 登入 + Supabase session 初始化流程。
  * 本地環境（NEXT_PUBLIC_ENV=local）使用 MockLiffService，不需要真實 LINE 登入。
- * 此元件本身不渲染載入畫面；消費端請從 useAuthStore 的 isLoading 判斷載入狀態。
+ * 此元件本身不渲染載入畫面；消費端請從 useAuthStore 的 status 判斷載入狀態。
  */
 export function LiffProvider({ children, liffId }: LiffProviderProps) {
-  const setUser = useAuthStore((s) => s.setUser)
-  const setLoading = useAuthStore((s) => s.setLoading)
+  const setAuthenticated = useAuthStore((s) => s.setAuthenticated)
+  const setRedirecting = useAuthStore((s) => s.setRedirecting)
+  const setOutOfClient = useAuthStore((s) => s.setOutOfClient)
   const initialised = useRef(false)
 
   useEffect(() => {
@@ -30,16 +31,14 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     async function bootstrap() {
       if (process.env.NEXT_PUBLIC_ENV !== "local" && !liffId) {
         console.error("[LiffProvider] NEXT_PUBLIC_LIFF_ID 未設定")
-        // 呼叫 setUser(null) 而非 setLoading(false)，確保 isInitialized 被設為 true
-        setUser(null)
+        setOutOfClient()
         return
       }
 
       // 安全防護：無論 NEXT_PUBLIC_ENV 的值為何，mock 登入在 NODE_ENV=production 時一律停用，
       // 防止環境變數設定錯誤導致正式環境以 mock 用戶身份運行。
       if (process.env.NEXT_PUBLIC_ENV === "local" && process.env.NODE_ENV !== "production") {
-        // setUser 已包含 isLoading: false 和 isInitialized: true，不需要再呼叫 setLoading
-        setUser({
+        setAuthenticated({
           id: MOCK_USER_ID,
           displayName: MOCK_USER_NAME,
           avatarUrl: "",
@@ -53,15 +52,21 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
         const supabase = createClient()
         const authService = new AuthService(liffService, supabase)
 
-        // initialize() 已內含 session 復用快路徑與 profile 解析，
-        // login() 觸發跳轉時回傳 null，此處直接照實設定即可。
-        const authUser = await authService.initialize(liffId)
-        setUser(authUser)
+        const result = await authService.initialize(liffId)
+        switch (result.status) {
+          case "authenticated":
+            setAuthenticated(result.user)
+            break
+          case "redirecting":
+            setRedirecting()
+            break
+          case "out-of-client":
+            setOutOfClient()
+            break
+        }
       } catch (err) {
         console.error("[LiffProvider] bootstrap 錯誤:", err)
-        setUser(null)
-      } finally {
-        setLoading(false)
+        setOutOfClient()
       }
     }
 
@@ -69,7 +74,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     // liffId 是建置時常數（NEXT_PUBLIC_LIFF_ID），執行時不會變更。
     // 使用 initialised.current 防止重複執行；列出 deps 是為了滿足 exhaustive-deps lint 規則。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liffId, setUser, setLoading])
+  }, [liffId, setAuthenticated, setRedirecting, setOutOfClient])
 
   return <>{children}</>
 }

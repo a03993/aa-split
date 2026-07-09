@@ -10,6 +10,11 @@ export type AuthUser = {
   lineUserId: string | null
 }
 
+export type AuthResult =
+  | { status: "authenticated"; user: AuthUser }
+  | { status: "redirecting" }
+  | { status: "out-of-client" }
+
 type ProfileData = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
   "display_name" | "avatar_url" | "line_user_id"
@@ -22,15 +27,17 @@ export class AuthService {
   ) {}
 
   /**
-   * LINE 登入 → Supabase session 初始化流程，回傳登入後的使用者資料（未登入/跳轉中則回傳 null）。
+   * LINE 登入 → Supabase session 初始化流程。
    *
-   * 兩條路徑：
-   * - 快路徑：本地已有未過期的 Supabase session（例如 LIFF webview 重開但登入未過期），
-   *   跳過整套 LINE 登入 + token 交換，只補一次 profiles 查詢取得最新顯示資料。
-   * - 完整路徑：無 session 或已過期，走 LIFF 登入 → token 交換 → 設定 session；
-   *   /api/auth/line 已回傳最新 profile，不需再額外打 getUser()/profiles 查詢一次。
+   * 三種結果：
+   * - authenticated：已登入（含快路徑：本地已有未過期的 Supabase session，
+   *   例如 LIFF webview 重開但登入未過期，跳過整套 LINE 登入 + token 交換，
+   *   只補一次 profiles 查詢取得最新顯示資料）。
+   * - redirecting：在 LINE App 內但尚未登入，liff.login() 會把整頁導去 LINE 授權頁，
+   *   此結果之後的程式碼不會被執行，回傳值幾乎不會被用到。
+   * - out-of-client：不在 LINE App 內，無法自動登入，需引導使用者改用 LINE 開啟。
    */
-  async initialize(liffId: string): Promise<AuthUser | null> {
+  async initialize(liffId: string): Promise<AuthResult> {
     await this.liffService.initialize(liffId)
 
     const {
@@ -38,13 +45,16 @@ export class AuthService {
     } = await this.supabaseClient.auth.getSession()
 
     if (existingSession && this.liffService.isLoggedIn()) {
-      return this.loadProfile(existingSession.user.id)
+      const user = await this.loadProfile(existingSession.user.id)
+      return { status: "authenticated", user }
     }
 
     if (!this.liffService.isLoggedIn()) {
+      if (!this.liffService.isInClient()) {
+        return { status: "out-of-client" }
+      }
       this.liffService.login()
-      // login() 會觸發頁面跳轉至 LINE 登入頁，此處之後的程式碼不會被執行。
-      return null
+      return { status: "redirecting" }
     }
 
     const accessToken = this.liffService.getAccessToken()
@@ -68,10 +78,13 @@ export class AuthService {
     }
 
     return {
-      id: user.id,
-      displayName: user.displayName,
-      avatarUrl: user.avatarUrl ?? "",
-      lineUserId: user.lineUserId,
+      status: "authenticated",
+      user: {
+        id: user.id,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl ?? "",
+        lineUserId: user.lineUserId,
+      },
     }
   }
 
