@@ -25,16 +25,16 @@ function CurrentUserDisplay() {
 
 function BookBreadcrumb({ bookId }: { bookId: string }) {
   const router = useRouter()
-  const { data: book, isLoading } = useBook(bookId)
+  const { data: book, isPending } = useBook(bookId)
 
-  if (isLoading) {
+  if (isPending) {
     return <div className="h-5 w-32 animate-pulse rounded bg-muted" />
   }
   if (!book) return null
 
   return (
     <div className="flex items-center">
-      <Button variant="ghost" size="icon-md" onClick={router.back}>
+      <Button variant="ghost" size="icon-md" onClick={() => router.replace("/")}>
         <ArrowLeft />
       </Button>
       <span className="font-semibold text-foreground">{book.name}</span>

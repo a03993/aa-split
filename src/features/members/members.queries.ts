@@ -44,6 +44,8 @@ export function useClaimMember() {
       // 同時清除帳本快取，因為 BookWithMembers 內嵌了 members 資料。
       void queryClient.invalidateQueries({ queryKey: ["books", variables.bookId] })
       void queryClient.invalidateQueries({ queryKey: bookKeys.bundle(variables.bookId) })
+      // 同時清除首頁帳本列表快取，因為 claim/unclaim/加入/移除成員都會改變使用者能看到哪些帳本。
+      void queryClient.invalidateQueries({ queryKey: bookKeys.all })
     },
   })
 }
@@ -61,6 +63,8 @@ export function useAddMember() {
       // 同時清除帳本快取，因為 BookWithMembers 內嵌了 members 資料。
       void queryClient.invalidateQueries({ queryKey: ["books", variables.bookId] })
       void queryClient.invalidateQueries({ queryKey: bookKeys.bundle(variables.bookId) })
+      // 同時清除首頁帳本列表快取，因為 claim/unclaim/加入/移除成員都會改變使用者能看到哪些帳本。
+      void queryClient.invalidateQueries({ queryKey: bookKeys.all })
     },
   })
 }
@@ -81,6 +85,8 @@ export function useAddMembers() {
       void queryClient.invalidateQueries({ queryKey: memberKeys.byBook(variables.bookId) })
       void queryClient.invalidateQueries({ queryKey: ["books", variables.bookId] })
       void queryClient.invalidateQueries({ queryKey: bookKeys.bundle(variables.bookId) })
+      // 同時清除首頁帳本列表快取，因為 claim/unclaim/加入/移除成員都會改變使用者能看到哪些帳本。
+      void queryClient.invalidateQueries({ queryKey: bookKeys.all })
     },
   })
 }
@@ -98,6 +104,8 @@ export function useRemoveMember() {
       // 同時清除帳本快取，因為 BookWithMembers 內嵌了 members 資料。
       void queryClient.invalidateQueries({ queryKey: ["books", variables.bookId] })
       void queryClient.invalidateQueries({ queryKey: bookKeys.bundle(variables.bookId) })
+      // 同時清除首頁帳本列表快取，因為 claim/unclaim/加入/移除成員都會改變使用者能看到哪些帳本。
+      void queryClient.invalidateQueries({ queryKey: bookKeys.all })
     },
   })
 }
@@ -115,6 +123,8 @@ export function useUnclaimMember() {
       // 同時清除帳本快取，因為 BookWithMembers 內嵌了 members 資料。
       void queryClient.invalidateQueries({ queryKey: ["books", variables.bookId] })
       void queryClient.invalidateQueries({ queryKey: bookKeys.bundle(variables.bookId) })
+      // 同時清除首頁帳本列表快取，因為 claim/unclaim/加入/移除成員都會改變使用者能看到哪些帳本。
+      void queryClient.invalidateQueries({ queryKey: bookKeys.all })
     },
   })
 }

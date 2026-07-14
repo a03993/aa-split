@@ -48,6 +48,7 @@ interface SettlementSheetProps {
   currency: string
   onConfirm: (settlementCurrency?: string, exchangeRate?: number) => Promise<void> | void
   isSettled?: boolean
+  isGuest?: boolean
   settledCurrency?: string | null
   settledExchangeRate?: number | null
 }
@@ -59,6 +60,7 @@ export function SettlementSheet({
   currency,
   onConfirm,
   isSettled = false,
+  isGuest = false,
   settledCurrency,
   settledExchangeRate,
 }: SettlementSheetProps) {
@@ -136,7 +138,7 @@ export function SettlementSheet({
             <Calculator />
           </Button>
         </SheetTrigger>
-        <SheetContent showCloseButton={false} className="h-[90dvh]">
+        <SheetContent showCloseButton={isGuest || isSettled} className="h-[90dvh]">
           <SheetHeader>
             <SheetTitle>結算</SheetTitle>
           </SheetHeader>
@@ -262,7 +264,7 @@ export function SettlementSheet({
               )}
             </div>
 
-            {!isSettled && (
+            {!isSettled && !isGuest && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <Checkbox
@@ -327,8 +329,8 @@ export function SettlementSheet({
             )}
           </div>
 
-          <SheetFooter className="flex-col gap-2">
-            {!isSettled && (
+          {!isGuest && !isSettled && (
+            <SheetFooter className="flex-col gap-2">
               <div className="flex gap-2">
                 <Button variant="ghost" className="flex-1" onClick={() => handleOpenChange(false)}>
                   取消
@@ -337,13 +339,8 @@ export function SettlementSheet({
                   確認結算
                 </Button>
               </div>
-            )}
-            {isSettled && (
-              <Button variant="ghost" className="flex-1" onClick={() => handleOpenChange(false)}>
-                關閉
-              </Button>
-            )}
-          </SheetFooter>
+            </SheetFooter>
+          )}
         </SheetContent>
       </Sheet>
 

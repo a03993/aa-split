@@ -10,10 +10,15 @@ import type {
 } from "@/types/app.types"
 
 // 切換目前的 mock 使用者：取消註解想要的那行，並將其他行註解掉。
+// 創建者
 export const MOCK_USER_ID = "mock-user-id-alice"
 export const MOCK_USER_NAME = "Alice"
-// export const MOCK_USER_ID = 'mock-user-id-bob';   export const MOCK_USER_NAME = 'Bob';   // 成員（Bob）
-// export const MOCK_USER_ID = 'mock-user-id-carol'; export const MOCK_USER_NAME = 'Carol'; // 成員（Carol）
+// 成員
+// export const MOCK_USER_ID = "mock-user-id-bob"
+// export const MOCK_USER_NAME = "Bob"
+// 非成員
+// export const MOCK_USER_ID = "mock-user-id-dave"
+// export const MOCK_USER_NAME = "Dave"
 
 const T_BOOK_CREATED = "2024-05-01T10:00:00.000Z"
 const T_BOOK_UPDATED = "2024-05-03T22:00:00.000Z"
@@ -97,6 +102,19 @@ export const MOCK_MEMBER_CAROL: Member = {
   profile: MOCK_USER_CAROL,
 }
 
+// 未認領的佔位成員：沒有綁定 profile_id，用來測試 claim / 訪客瀏覽 flow。
+// 切到 MOCK_USER_ID = mock-user-id-dave 時，Dave 不是任何 member 的 profile_id，
+// 會被視為非成員，觸發 ClaimDialog 自動彈出。
+export const MOCK_MEMBER_DAVE_ID = "mock-member-dave"
+export const MOCK_MEMBER_DAVE_PLACEHOLDER: Member = {
+  id: MOCK_MEMBER_DAVE_ID,
+  book_id: MOCK_BOOK_ID,
+  display_name: "Dave",
+  profile_id: null,
+  created_at: "2024-05-01T10:00:03.000Z",
+  profile: null,
+}
+
 export const MOCK_BOOK: BookRow = {
   id: MOCK_BOOK_ID,
   name: "台北週末之旅",
@@ -110,7 +128,7 @@ export const MOCK_BOOK: BookRow = {
 
 export const MOCK_BOOK_WITH_MEMBERS: BookWithMembers = {
   ...MOCK_BOOK,
-  members: [MOCK_MEMBER_ALICE, MOCK_MEMBER_BOB, MOCK_MEMBER_CAROL],
+  members: [MOCK_MEMBER_ALICE, MOCK_MEMBER_BOB, MOCK_MEMBER_CAROL, MOCK_MEMBER_DAVE_PLACEHOLDER],
 }
 
 export const MOCK_EXPENSE_DINNER: ExpenseRow = {
@@ -317,6 +335,7 @@ export const MOCK_MEMBERS: Member[] = [
   { ...MOCK_MEMBER_ALICE },
   { ...MOCK_MEMBER_BOB },
   { ...MOCK_MEMBER_CAROL },
+  { ...MOCK_MEMBER_DAVE_PLACEHOLDER },
 ]
 
 export const MOCK_EXPENSES: ExpenseRow[] = [

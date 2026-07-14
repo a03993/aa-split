@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { Share2 } from "lucide-react"
+import { Plus, Share2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import type { CreateExpenseInput } from "@/domain/expense/expense.repository"
@@ -28,6 +28,7 @@ interface ToolbarProps {
   onSettleConfirm: (settlementCurrency?: string, exchangeRate?: number) => Promise<void> | void
   onSelectExpense: (expense: ExpenseWithDetails) => void
   onShare: () => void
+  onRequireClaim: () => void
 }
 
 export function Toolbar({
@@ -45,26 +46,36 @@ export function Toolbar({
   onSettleConfirm,
   onSelectExpense,
   onShare,
+  onRequireClaim,
 }: ToolbarProps) {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false)
+  const isGuest = !currentMemberId
 
   return (
     <div className="fixed inset-x-0 z-50 flex place-content-evenly [bottom:max(1.5rem,env(safe-area-inset-bottom))]">
-      <AddExpenseSheet
-        bookId={bookId}
-        members={members}
-        currency={book.currency}
-        customCategories={customCategories}
-        currentMemberId={currentMemberId}
-        isSettled={isSettled}
-        open={isAddExpenseOpen}
-        onSubmit={onAddExpense}
-        onOpenChange={setIsAddExpenseOpen}
-      />
+      {isGuest ? (
+        <Button size="icon-lg" disabled={isSettled} onClick={onRequireClaim}>
+          <Plus />
+        </Button>
+      ) : (
+        <AddExpenseSheet
+          bookId={bookId}
+          members={members}
+          currency={book.currency}
+          customCategories={customCategories}
+          currentMemberId={currentMemberId}
+          isSettled={isSettled}
+          open={isAddExpenseOpen}
+          onSubmit={onAddExpense}
+          onOpenChange={setIsAddExpenseOpen}
+        />
+      )}
       <ExpenseListSheet
         book={book}
         expenses={expenses}
         currentMemberId={currentMemberId}
+        isGuest={isGuest}
+        isSettled={isSettled}
         onSelectExpense={onSelectExpense}
         onAddExpense={() => setIsAddExpenseOpen(true)}
       />
@@ -74,6 +85,7 @@ export function Toolbar({
         transfers={settlementPlan.transfers}
         currency={book.currency}
         isSettled={isSettled}
+        isGuest={isGuest}
         settledCurrency={settledCurrency}
         settledExchangeRate={settledExchangeRate}
         onConfirm={onSettleConfirm}

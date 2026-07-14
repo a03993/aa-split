@@ -51,6 +51,7 @@ interface ExpenseDetailDialogProps {
   currency: string
   customCategories?: Category[]
   isSettled: boolean
+  isGuest?: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   onUpdate: (data: UpdateExpenseInput, notifyGroup: boolean) => void
@@ -63,6 +64,7 @@ export function ExpenseDetailDialog({
   currency,
   customCategories = [],
   isSettled,
+  isGuest = false,
   open,
   onOpenChange,
   onUpdate,
@@ -77,7 +79,7 @@ export function ExpenseDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent showCloseButton={isGuest || isSettled}>
         {isEditing ? (
           <EditMode
             key={expense.id}
@@ -95,6 +97,7 @@ export function ExpenseDetailDialog({
             currency={currency}
             customCategories={customCategories}
             isSettled={isSettled}
+            isGuest={isGuest}
             onEdit={() => setIsEditing(true)}
             onClose={() => handleOpenChange(false)}
             onDelete={onDelete}
@@ -111,6 +114,7 @@ function ReadMode({
   currency,
   customCategories,
   isSettled,
+  isGuest,
   onEdit,
   onClose,
   onDelete,
@@ -120,6 +124,7 @@ function ReadMode({
   currency: string
   customCategories: Category[]
   isSettled: boolean
+  isGuest: boolean
   onEdit: () => void
   onClose: () => void
   onDelete?: () => void
@@ -204,27 +209,27 @@ function ReadMode({
         </div>
       </div>
 
-      <DialogFooter className="flex-col gap-2">
-        {!isSettled && onDelete && (
-          <Button
-            variant="ghost"
-            className="text-destructive"
-            onClick={() => setIsConfirmingDelete(true)}
-          >
-            刪除
-          </Button>
-        )}
-        <div className="flex w-full gap-2">
-          <Button variant="ghost" className="flex-1" onClick={onClose}>
-            關閉
-          </Button>
-          {!isSettled && (
+      {!isGuest && !isSettled && (
+        <DialogFooter className="flex-col gap-2">
+          {onDelete && (
+            <Button
+              variant="ghost"
+              className="text-destructive"
+              onClick={() => setIsConfirmingDelete(true)}
+            >
+              刪除
+            </Button>
+          )}
+          <div className="flex w-full gap-2">
+            <Button variant="ghost" className="flex-1" onClick={onClose}>
+              關閉
+            </Button>
             <Button className="flex-1" onClick={onEdit}>
               編輯
             </Button>
-          )}
-        </div>
-      </DialogFooter>
+          </div>
+        </DialogFooter>
+      )}
 
       <AlertDialog open={isConfirmingDelete} onOpenChange={setIsConfirmingDelete}>
         <AlertDialogContent>

@@ -11,7 +11,7 @@ import { CreateBookSheet } from "@/features/books/components/create-book-sheet"
 
 export function Home() {
   const { user } = useRequireAuth()
-  const { data: books, isLoading: isBooksLoading } = useUserBooks(user?.id)
+  const { data: books, isPending: isBooksPending } = useUserBooks(user?.id)
   const createBook = useCreateBook()
 
   const handleCreateBook = async (data: CreateBookInput) => {
@@ -27,7 +27,7 @@ export function Home() {
     )
   }
 
-  if (isBooksLoading) {
+  if (isBooksPending) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Spinner label="正在載入帳本..." />

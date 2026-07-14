@@ -26,7 +26,7 @@ import {
   useDeleteExpense,
   useUpdateExpense,
 } from "@/features/expenses/expenses.queries"
-import { ClaimDialog } from "@/features/members/components/claim-dialog"
+import { ClaimDialog, type ClaimDialogTrigger } from "@/features/members/components/claim-dialog"
 import { MemberDialog } from "@/features/members/components/member-dialog"
 import {
   useAddMembers,
@@ -55,7 +55,7 @@ export function GroupView({ bookId }: GroupViewProps) {
   const router = useRouter()
 
   // 一次取得 book + members + expenses + settlements，取代 4 個獨立 hook 各自的 round trip。
-  const { data: bundle, error: bundleError, isLoading: isBundleLoading } = useBookBundle(bookId)
+  const { data: bundle, error: bundleError, isPending: isBundlePending } = useBookBundle(bookId)
   const book = bundle?.book ?? null
   // useMemo 保證未變動時參考穩定，避免下游 useMemo（currentMember/unclaimedMembers/totalAmount）誤判每次重算。
   const members = useMemo(() => bundle?.members ?? [], [bundle])
@@ -76,7 +76,9 @@ export function GroupView({ bookId }: GroupViewProps) {
   const settledConversion = settlementRecords.find((r) => r.settlement_currency && r.exchange_rate)
 
   const [claimDialogOpen, setClaimDialogOpen] = useState(false)
+  const [claimDialogTrigger, setClaimDialogTrigger] = useState<ClaimDialogTrigger>("entry")
   const [selectedExpense, setSelectedExpense] = useState<ExpenseWithDetails | null>(null)
+  const [isLeaving, setIsLeaving] = useState(false)
 
   const currentMember = useMemo(
     () => members.find((m) => m.profile_id === user?.id),
@@ -88,12 +90,13 @@ export function GroupView({ bookId }: GroupViewProps) {
   const claimAutoOpenedRef = useRef(false)
 
   useEffect(() => {
-    if (isBundleLoading) return
-    if (currentMember || unclaimedMembers.length === 0) return
+    if (isBundlePending) return
+    if (currentMember) return
     if (claimAutoOpenedRef.current) return
     claimAutoOpenedRef.current = true
+    setClaimDialogTrigger("entry")
     setClaimDialogOpen(true)
-  }, [isBundleLoading, currentMember, unclaimedMembers.length])
+  }, [isBundlePending, currentMember])
 
   const totalAmount = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
 
@@ -140,14 +143,18 @@ export function GroupView({ bookId }: GroupViewProps) {
   }
 
   function handleLeaveMember(memberId: string, onSuccess: () => void) {
-    removeMember.mutate(
+    setIsLeaving(true)
+    unclaimMember.mutate(
       { memberId, bookId },
       {
         onSuccess: () => {
           onSuccess()
           router.replace("/")
         },
-        onError: () => toast.error("離開帳本失敗，請稍後再試"),
+        onError: () => {
+          setIsLeaving(false)
+          toast.error("離開帳本失敗，請稍後再試")
+        },
       },
     )
   }
@@ -208,9 +215,17 @@ export function GroupView({ bookId }: GroupViewProps) {
 
   if (!user) return null
 
+  if (isLeaving) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <Spinner label="正在離開帳本..." />
+      </div>
+    )
+  }
+
   if (bundleError) throw bundleError
 
-  if (isBundleLoading) {
+  if (isBundlePending) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Spinner label="載入帳本資料中..." />
@@ -285,11 +300,16 @@ export function GroupView({ bookId }: GroupViewProps) {
         onSettleConfirm={handleSettleConfirm}
         onSelectExpense={setSelectedExpense}
         onShare={handleShare}
+        onRequireClaim={() => {
+          setClaimDialogTrigger("add-expense")
+          setClaimDialogOpen(true)
+        }}
       />
 
       <ClaimDialog
         open={claimDialogOpen}
         unclaimedMembers={unclaimedMembers}
+        trigger={claimDialogTrigger}
         onClaim={handleClaim}
         onContinueAsGuest={() => setClaimDialogOpen(false)}
       />
@@ -302,6 +322,7 @@ export function GroupView({ bookId }: GroupViewProps) {
           currency={book.currency}
           customCategories={book.custom_categories}
           isSettled={bookIsSettled}
+          isGuest={!currentMember}
           onOpenChange={(open) => {
             if (!open) setSelectedExpense(null)
           }}

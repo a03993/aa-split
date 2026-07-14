@@ -281,7 +281,7 @@ export function MemberDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>確認離開帳本</AlertDialogTitle>
             <AlertDialogDescription>
-              離開後將無法查看此帳本的費用紀錄，此操作無法復原。
+              離開後，這個身份會變成未認領狀態，之後可以重新認領。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

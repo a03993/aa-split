@@ -23,6 +23,8 @@ interface ExpenseListSheetProps {
   book: BookWithMembers
   expenses: ExpenseWithDetails[]
   currentMemberId?: string
+  isGuest?: boolean
+  isSettled?: boolean
   onSelectExpense: (expense: ExpenseWithDetails) => void
   onAddExpense: () => void
 }
@@ -31,6 +33,8 @@ export function ExpenseListSheet({
   book,
   expenses,
   currentMemberId,
+  isGuest = false,
+  isSettled = false,
   onSelectExpense,
   onAddExpense,
 }: ExpenseListSheetProps) {
@@ -72,7 +76,7 @@ export function ExpenseListSheet({
           <List />
         </Button>
       </SheetTrigger>
-      <SheetContent showCloseButton={false} className="h-[90dvh]">
+      <SheetContent showCloseButton={isGuest || isSettled} className="h-[90dvh]">
         <SheetHeader>
           <SheetTitle>帳單列表</SheetTitle>
           <CategorySelect
@@ -110,14 +114,16 @@ export function ExpenseListSheet({
             )}
           </div>
         </div>
-        <SheetFooter>
-          <Button variant="ghost" className="flex-1" onClick={() => setIsOpen(false)}>
-            關閉
-          </Button>
-          <Button className="flex-1" onClick={onAddExpense}>
-            新增帳單
-          </Button>
-        </SheetFooter>
+        {!isGuest && !isSettled && (
+          <SheetFooter>
+            <Button variant="ghost" className="flex-1" onClick={() => setIsOpen(false)}>
+              關閉
+            </Button>
+            <Button className="flex-1" onClick={onAddExpense}>
+              新增帳單
+            </Button>
+          </SheetFooter>
+        )}
       </SheetContent>
     </Sheet>
   )

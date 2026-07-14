@@ -107,7 +107,7 @@ describe("GroupView", () => {
     useBookBundleMock.mockReturnValue({
       data: makeBundle([makeMember("m-owner", "user-owner"), makeMember("m-pending", null)]),
       error: null,
-      isLoading: false,
+      isPending: false,
     })
 
     render(<GroupView bookId="book-1" />)
@@ -119,7 +119,7 @@ describe("GroupView", () => {
     useBookBundleMock.mockReturnValue({
       data: makeBundle([makeMember("m-owner", "user-owner"), makeMember("m-self", "user-self")]),
       error: null,
-      isLoading: false,
+      isPending: false,
     })
 
     render(<GroupView bookId="book-1" />)
@@ -127,23 +127,23 @@ describe("GroupView", () => {
     expect(screen.getByTestId("claim-dialog")).toHaveAttribute("data-open", "false")
   })
 
-  it("沒有未認領成員時，不自動開啟 ClaimDialog", () => {
+  it("目前使用者非成員且沒有未認領成員時，仍自動開啟 ClaimDialog（提供訪客瀏覽選項）", () => {
     useBookBundleMock.mockReturnValue({
       data: makeBundle([makeMember("m-owner", "user-owner")]),
       error: null,
-      isLoading: false,
+      isPending: false,
     })
 
     render(<GroupView bookId="book-1" />)
 
-    expect(screen.getByTestId("claim-dialog")).toHaveAttribute("data-open", "false")
+    expect(screen.getByTestId("claim-dialog")).toHaveAttribute("data-open", "true")
   })
 
   it("載入完成後找不到帳本時呼叫 notFound()", () => {
     useBookBundleMock.mockReturnValue({
       data: { book: undefined, members: [], expenses: [], settlements: [] },
       error: null,
-      isLoading: false,
+      isPending: false,
     })
 
     expect(() => render(<GroupView bookId="book-1" />)).toThrow("NEXT_NOT_FOUND")
@@ -151,7 +151,7 @@ describe("GroupView", () => {
   })
 
   it("資料載入中時顯示 loading 畫面，不渲染 Toolbar", () => {
-    useBookBundleMock.mockReturnValue({ data: undefined, error: null, isLoading: true })
+    useBookBundleMock.mockReturnValue({ data: undefined, error: null, isPending: true })
 
     render(<GroupView bookId="book-1" />)
 
