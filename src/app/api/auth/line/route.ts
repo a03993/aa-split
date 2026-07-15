@@ -4,10 +4,8 @@ import { createClient } from "@supabase/supabase-js"
 
 import type { Database } from "@/types/database.types"
 
-// 簡易記憶體速率限制：每個 IP 在 60 秒視窗內最多允許 10 次請求。
 // 注意：多實例部署時此限制僅對單一實例有效，如需全域限制請改用 Upstash Rate Limit。
-// 注意：此 Map 不會主動清理過期 entry，在長時間運行的單一實例中，
-//       大量不同 IP 造訪可能導致記憶體緩慢增長，視流量規模決定是否需要加入 LRU 或定期清理。
+// 注意：此 Map 不會主動清理過期 entry，長時間運行下大量不同 IP 造訪可能導致記憶體緩慢增長，視流量規模決定是否需要加入 LRU 或定期清理。
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT_MAX = 10
 const RATE_LIMIT_WINDOW_MS = 60_000
@@ -39,17 +37,6 @@ interface LineProfile {
 interface RequestBody {
   accessToken: string
 }
-
-// POST /api/auth/line
-// 請求內容: { accessToken: string }
-//
-// 流程：
-//   1. 用 LIFF access token 向 LINE Profile API 驗證身份。
-//   2. 以 line_user_id 查詢或建立對應的 Supabase auth 用戶。
-//   3. Upsert profiles 資料列，更新最新的 display_name / avatar_url。
-//      （upsert 同時負責「首次建立 profile」與「後續更新」，不依賴資料庫 trigger）
-//   4. 在伺服器端產生 magic link 並用 verifyOtp 換取真實 session。
-//   5. 回傳 { accessToken, refreshToken, user }，OTP 不暴露給瀏覽器。
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const ip =
@@ -109,7 +96,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   })
 
   // 使用一般 anon key client 在伺服器端完成 OTP 驗證，換取真實 session。
-  // OTP 全程不離開此 API route，不會暴露給瀏覽器。
   const regularSupabase = createClient<Database>(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   })

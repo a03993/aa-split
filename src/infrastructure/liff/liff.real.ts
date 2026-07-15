@@ -7,9 +7,14 @@ import type { LiffProfile, LiffService } from "./liff.provider"
 let liffInstance: typeof import("@line/liff").default | null = null
 
 async function getLiff(): Promise<typeof import("@line/liff").default> {
-  if (liffInstance) return liffInstance
+  if (liffInstance) {
+    return liffInstance
+  }
+
   const mod = await import("@line/liff")
+
   liffInstance = mod.default
+
   return liffInstance
 }
 
@@ -22,12 +27,17 @@ export class RealLiffService implements LiffService {
     }
 
     const liff = await getLiff()
+
     await liff.init({ liffId })
+
     this.initialized = true
   }
 
   isLoggedIn(): boolean {
-    if (!this.initialized || !liffInstance) return false
+    if (!this.initialized || !liffInstance) {
+      return false
+    }
+
     return liffInstance.isLoggedIn()
   }
 
@@ -36,6 +46,7 @@ export class RealLiffService implements LiffService {
       console.warn("[RealLiff] login() called before initialize()")
       return
     }
+
     liffInstance.login()
   }
 
@@ -44,6 +55,7 @@ export class RealLiffService implements LiffService {
       console.warn("[RealLiff] logout() called before initialize()")
       return
     }
+
     liffInstance.logout()
   }
 
@@ -68,12 +80,18 @@ export class RealLiffService implements LiffService {
   }
 
   getAccessToken(): string | null {
-    if (!this.initialized || !liffInstance) return null
+    if (!this.initialized || !liffInstance) {
+      return null
+    }
+
     return liffInstance.getAccessToken()
   }
 
   isInClient(): boolean {
-    if (!this.initialized || !liffInstance) return false
+    if (!this.initialized || !liffInstance) {
+      return false
+    }
+
     return liffInstance.isInClient()
   }
 

@@ -37,7 +37,7 @@ import {
 import { TimePickerDialog } from "@/components/ui/time-picker-dialog"
 import type { UpdateExpenseInput } from "@/domain/expense/expense.repository"
 import { CategoryPickerDialog } from "@/features/expenses/components/category-picker-dialog"
-import { ParticipantAmountItem } from "@/features/expenses/components/participant-amount-item"
+import { CustomSplit, EqualSplit } from "@/features/expenses/components/participant"
 import { SPLIT_MODES, useExpenseForm } from "@/features/expenses/use-expense-form"
 import { getCategoryIcon, getCategoryLabel } from "@/lib/categories"
 import { getCurrencySymbol } from "@/lib/currencies"
@@ -73,7 +73,10 @@ export function ExpenseDetailDialog({
   const [isEditing, setIsEditing] = useState(false)
 
   function handleOpenChange(isOpen: boolean) {
-    if (!isOpen) setIsEditing(false)
+    if (!isOpen) {
+      setIsEditing(false)
+    }
+
     onOpenChange(isOpen)
   }
 
@@ -271,9 +274,13 @@ function EditMode({
   // shares != null → 份數模式，還原份數；shares == null → 手動金額，還原 manualAmounts
   const initialShares: Record<string, number> = {}
   const initialManualAmounts: Record<string, number | null> = {}
+
   if (expense.split_mode === "custom") {
     for (const s of expense.expense_splits) {
-      if (Number(s.amount) <= 0) continue
+      if (Number(s.amount) <= 0) {
+        continue
+      }
+
       if (s.shares != null) {
         initialShares[s.member_id] = s.shares
       } else {
@@ -328,9 +335,21 @@ function EditMode({
   const dateObj = formDate ? new Date(formDate + "T00:00:00") : new Date(expense.date + "T00:00:00")
   const [selectedHour, selectedMinute] = formTime ? formTime.split(":") : initialTime.split(":")
 
+  function handleCategoryConfirm(value: string, newCategory?: Category) {
+    setValue("category", value, { shouldValidate: true })
+
+    if (newCategory) {
+      setPendingCategories((prev) => [...prev, newCategory])
+    }
+  }
+
   const handleFormSubmit = handleSubmit((data) => {
     const payload = buildSubmitPayload(data)
-    if (!payload) return
+
+    if (!payload) {
+      return
+    }
+
     onUpdate(
       {
         expenseId: expense.id,
@@ -347,6 +366,7 @@ function EditMode({
       },
       isNotify,
     )
+
     onCancel()
   })
 
@@ -390,10 +410,7 @@ function EditMode({
               id="edit-expense-category"
               value={formCategory}
               customCategories={[...customCategories, ...pendingCategories]}
-              onConfirm={(val, pending) => {
-                setValue("category", val, { shouldValidate: true })
-                if (pending) setPendingCategories((prev) => [...prev, pending])
-              }}
+              onConfirm={handleCategoryConfirm}
             />
           </div>
 
@@ -482,57 +499,29 @@ function EditMode({
 
           {splitMode === "equal" ? (
             <div className="flex flex-row flex-wrap gap-2 py-2">
-              {members.map((member) => {
-                const checked = participantIds.includes(member.id)
-                return (
-                  <button
-                    key={member.id}
-                    type="button"
-                    className="flex flex-col items-center gap-1 rounded-lg p-2 active:bg-muted/50"
-                    onClick={() => toggleParticipant(member.id)}
-                  >
-                    <Avatar
-                      className={cn(
-                        checked && "ring-2 ring-black ring-offset-1",
-                        !checked && "opacity-40",
-                      )}
-                    >
-                      {member.profile?.avatar_url && (
-                        <AvatarImage src={member.profile.avatar_url} />
-                      )}
-                      <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className={cn("text-sm", !checked && "text-muted-foreground")}>
-                      {member.display_name}
-                    </span>
-                  </button>
-                )
-              })}
+              {members.map((member) => (
+                <EqualSplit
+                  key={member.id}
+                  member={member}
+                  checked={participantIds.includes(member.id)}
+                  onToggle={() => toggleParticipant(member.id)}
+                />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {members.map((member) => {
-                const isManual = manualAmounts[member.id] != null
-                const memberShares = shares[member.id] ?? 1
-                const displayAmount = splitAmounts[member.id] ?? 0
-                const { onShareDecrement, onShareIncrement, onAmountChange } = createSplitHandlers(
-                  member.id,
-                )
-                return (
-                  <ParticipantAmountItem
-                    key={member.id}
-                    member={member}
-                    isParticipant={participantIds.includes(member.id)}
-                    isManual={isManual}
-                    shares={memberShares}
-                    displayAmount={isManual ? (manualAmounts[member.id] ?? 0) : displayAmount}
-                    currency={currency}
-                    onShareDecrement={onShareDecrement}
-                    onShareIncrement={onShareIncrement}
-                    onAmountChange={onAmountChange}
-                  />
-                )
-              })}
+              {members.map((member) => (
+                <CustomSplit
+                  key={member.id}
+                  member={member}
+                  isParticipant={participantIds.includes(member.id)}
+                  manualAmount={manualAmounts[member.id]}
+                  shares={shares[member.id] ?? 1}
+                  displayAmount={splitAmounts[member.id] ?? 0}
+                  currency={currency}
+                  createSplitHandlers={createSplitHandlers}
+                />
+              ))}
             </div>
           )}
 

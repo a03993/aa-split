@@ -47,19 +47,28 @@ export function ExpenseListSheet({
   }, [book.custom_categories])
 
   const filteredExpenses = useMemo(() => {
-    if (selectedCategory === null) return expenses
+    if (selectedCategory === null) {
+      return expenses
+    }
+
     return expenses.filter((e) => e.category === selectedCategory)
   }, [expenses, selectedCategory])
 
   const groupedExpenses = useMemo(() => {
     const map = new Map<string, typeof filteredExpenses>()
+
     for (const expense of filteredExpenses) {
-      if (!map.has(expense.date)) map.set(expense.date, [])
+      if (!map.has(expense.date)) {
+        map.set(expense.date, [])
+      }
+
       map.get(expense.date)!.push(expense)
     }
+
     for (const group of map.values()) {
       group.sort((a, b) => (b.time ?? "").localeCompare(a.time ?? ""))
     }
+
     return Array.from(map.entries())
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([date, group]) => ({

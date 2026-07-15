@@ -56,7 +56,9 @@ export class ExpenseService {
   // equal 模式：將 splits 替換為自動計算的均分結果。
   // custom 模式：splits 已由呼叫端計算完畢，直接回傳原始 input。
   private resolveEqualSplits<T extends CreateExpenseInput | UpdateExpenseInput>(input: T): T {
-    if (input.splitMode !== "equal") return input
+    if (input.splitMode !== "equal") {
+      return input
+    }
 
     const memberIds = input.splits.map((s) => s.memberId)
     const amounts = calculateEqualSplit(input.amount, memberIds.length)
@@ -64,6 +66,7 @@ export class ExpenseService {
       memberId,
       amount: amounts[index],
     }))
+
     return { ...input, splits: equalSplits }
   }
 }

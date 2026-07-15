@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
 
 interface DatePickerDialogProps {
   id?: string
@@ -60,7 +59,9 @@ export function DatePickerDialog({
           selected={selectedDate}
           month={currentMonth}
           onSelect={(d) => {
-            if (d) setSelectedDate(d)
+            if (d) {
+              setSelectedDate(d)
+            }
           }}
           onMonthChange={setCurrentMonth}
         />

@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { isOwner, isSettled } from "@/domain/book"
-import type { CreateExpenseInput } from "@/domain/expense/expense.repository"
+import type { CreateExpenseInput, UpdateExpenseInput } from "@/domain/expense/expense.repository"
 import { canClaim } from "@/domain/member"
 import { useRequireAuth } from "@/features/auth/use-auth"
 import { useBookBundle, useSettleBook } from "@/features/books/books.queries"
@@ -56,7 +56,7 @@ export function GroupView({ bookId }: GroupViewProps) {
 
   // 一次取得 book + members + expenses + settlements，取代 4 個獨立 hook 各自的 round trip。
   const { data: bundle, error: bundleError, isPending: isBundlePending } = useBookBundle(bookId)
-  const book = bundle?.book ?? null
+  const book = bundle?.book
   // useMemo 保證未變動時參考穩定，避免下游 useMemo（currentMember/unclaimedMembers/totalAmount）誤判每次重算。
   const members = useMemo(() => bundle?.members ?? [], [bundle])
   const expenses = useMemo(() => bundle?.expenses ?? [], [bundle])
@@ -69,7 +69,6 @@ export function GroupView({ bookId }: GroupViewProps) {
   const unclaimMember = useUnclaimMember()
   const addMembers = useAddMembers()
   const settleBook = useSettleBook()
-
   const settlementPlan = useSettlementPlan(members, expenses)
 
   const [claimDialogOpen, setClaimDialogOpen] = useState(false)
@@ -84,25 +83,41 @@ export function GroupView({ bookId }: GroupViewProps) {
 
   const unclaimedMembers = useMemo(() => members.filter(canClaim), [members])
 
-  const claimAutoOpenedRef = useRef(false)
+  const claimDialogShownRef = useRef(false)
+
+  function openClaimDialog(trigger: ClaimDialogTrigger) {
+    setClaimDialogTrigger(trigger)
+    setClaimDialogOpen(true)
+  }
 
   useEffect(() => {
-    if (isBundlePending) return
-    if (currentMember) return
-    if (claimAutoOpenedRef.current) return
-    claimAutoOpenedRef.current = true
-    setClaimDialogTrigger("entry")
-    setClaimDialogOpen(true)
+    if (isBundlePending) {
+      return
+    }
+
+    if (currentMember) {
+      return
+    }
+
+    if (claimDialogShownRef.current) {
+      return
+    }
+
+    claimDialogShownRef.current = true
+
+    openClaimDialog("entry")
   }, [isBundlePending, currentMember])
 
   const totalAmount = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
 
   const memberIdsInExpenses = useMemo(() => {
     const ids = new Set<string>()
+
     expenses.forEach((e) => {
       ids.add(e.payer_member_id)
       e.expense_splits.forEach((s) => ids.add(s.member_id))
     })
+
     return ids
   }, [expenses])
 
@@ -141,6 +156,7 @@ export function GroupView({ bookId }: GroupViewProps) {
 
   function handleLeaveMember(memberId: string, onSuccess: () => void) {
     setIsLeaving(true)
+
     unclaimMember.mutate(
       { memberId, bookId },
       {
@@ -170,7 +186,10 @@ export function GroupView({ bookId }: GroupViewProps) {
   }
 
   async function handleShare() {
-    if (!book) return
+    if (!book) {
+      return
+    }
+
     try {
       await shareService.shareToLine(bookId, book.name)
     } catch (err) {
@@ -180,10 +199,13 @@ export function GroupView({ bookId }: GroupViewProps) {
   }
 
   async function handleSettleConfirm(settlementCurrency?: string, exchangeRate?: number) {
-    if (members.length === 0) return
-    // 不在這裡 catch：讓錯誤傳給 SettlementSheet 的 handleConfirm，
-    // 由它決定失敗時保持 sheet 開啟並顯示錯誤 toast。
+    if (members.length === 0) {
+      return
+    }
+
+    // 不在這裡 catch：讓錯誤傳給 SettlementSheet 的 handleConfirm，由它決定失敗時保持 sheet 開啟並顯示錯誤 toast。
     await settleBook.mutateAsync({ bookId, members, expenses, settlementCurrency, exchangeRate })
+
     toast.success("結算完成")
   }
 
@@ -210,7 +232,22 @@ export function GroupView({ bookId }: GroupViewProps) {
     )
   }
 
-  if (!user) return null
+  function handleUpdateExpense(data: UpdateExpenseInput, notifyGroup: boolean) {
+    updateExpense.mutate(
+      { input: data, notifyGroup },
+      {
+        onSuccess: () => {
+          setSelectedExpense(null)
+          toast.success("已更新費用")
+        },
+        onError: () => toast.error("更新費用失敗，請稍後再試"),
+      },
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   if (isLeaving) {
     return (
@@ -220,7 +257,9 @@ export function GroupView({ bookId }: GroupViewProps) {
     )
   }
 
-  if (bundleError) throw bundleError
+  if (bundleError) {
+    throw bundleError
+  }
 
   if (isBundlePending) {
     return (
@@ -297,10 +336,7 @@ export function GroupView({ bookId }: GroupViewProps) {
         onSettleConfirm={handleSettleConfirm}
         onSelectExpense={setSelectedExpense}
         onShare={handleShare}
-        onRequireClaim={() => {
-          setClaimDialogTrigger("add-expense")
-          setClaimDialogOpen(true)
-        }}
+        onRequireClaim={() => openClaimDialog("add-expense")}
       />
 
       <ClaimDialog
@@ -323,18 +359,7 @@ export function GroupView({ bookId }: GroupViewProps) {
           onOpenChange={(open) => {
             if (!open) setSelectedExpense(null)
           }}
-          onUpdate={(data, notifyGroup) => {
-            updateExpense.mutate(
-              { input: data, notifyGroup },
-              {
-                onSuccess: () => {
-                  setSelectedExpense(null)
-                  toast.success("已更新費用")
-                },
-                onError: () => toast.error("更新費用失敗，請稍後再試"),
-              },
-            )
-          }}
+          onUpdate={handleUpdateExpense}
           onDelete={() => handleDeleteExpense(selectedExpense.id)}
         />
       )}

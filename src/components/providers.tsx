@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister"
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
 import { Toaster } from "sonner"
@@ -21,27 +21,35 @@ const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID ?? ""
 const PERSIST_BUSTER = "v1"
 const PERSIST_MAX_AGE = 24 * 60 * 60 * 1000
 
-// SSR 階段沒有 window/localStorage，此時回傳 undefined，Providers 改走不 persist 的 fallback。
+function createQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60 * 1000,
+        gcTime: PERSIST_MAX_AGE,
+      },
+    },
+  })
+}
+
+// SSR 階段沒有 window/localStorage，此時回傳 undefined。
 function createPersister() {
-  if (typeof window === "undefined") return undefined
-  return createSyncStoragePersister({
-    storage: window.localStorage,
+  if (typeof window === "undefined") {
+    return undefined
+  }
+
+  return createAsyncStoragePersister({
+    storage: {
+      getItem: (key) => Promise.resolve(window.localStorage.getItem(key)),
+      setItem: (key, value) => Promise.resolve(window.localStorage.setItem(key, value)),
+      removeItem: (key) => Promise.resolve(window.localStorage.removeItem(key)),
+    },
     key: "aa-split-query-cache",
   })
 }
 
 export function Providers({ children }: ProvidersProps) {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 60 * 1000,
-            gcTime: PERSIST_MAX_AGE,
-          },
-        },
-      }),
-  )
+  const [queryClient] = useState(createQueryClient)
   const [persister] = useState(createPersister)
 
   const inner = (

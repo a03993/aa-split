@@ -73,15 +73,17 @@ export function useExpenseForm({
   const customSplitResults = useMemo<
     Array<{ memberId: string; amount: number; shares: number | null }>
   >(() => {
-    if (splitMode !== "custom" || !amount) return []
-    return calculateCustomSplit(
-      amount,
-      participantIds.map((id) => ({
-        memberId: id,
-        fixedAmount: manualAmounts[id] !== null ? (manualAmounts[id] ?? undefined) : undefined,
-        shares: shares[id] ?? 1,
-      })),
-    )
+    if (splitMode !== "custom" || !amount) {
+      return []
+    }
+
+    const participants = participantIds.map((id) => ({
+      memberId: id,
+      fixedAmount: manualAmounts[id] ?? undefined,
+      shares: shares[id] ?? 1,
+    }))
+
+    return calculateCustomSplit(amount, participants)
   }, [amount, participantIds, shares, manualAmounts, splitMode])
 
   const splitAmounts = useMemo<Record<string, number>>(() => {
@@ -104,16 +106,23 @@ export function useExpenseForm({
     function onShareDecrement() {
       // 手動模式下 shares[id] 已被清除，視為從 1 開始，按 - 即移除
       const effectiveShares = isManual ? 1 : currentShares
+
       if (effectiveShares <= 1) {
-        if (isParticipant) toggleParticipant(memberId)
+        if (isParticipant) {
+          toggleParticipant(memberId)
+        }
+
         setManualAmounts((prev) => {
           const next = { ...prev }
           delete next[memberId]
+
           return next
         })
+
         setShares((prev) => {
           const next = { ...prev }
           delete next[memberId]
+
           return next
         })
       } else {
@@ -125,8 +134,13 @@ export function useExpenseForm({
     function onShareIncrement() {
       // 手動模式下 shares[id] 已被清除，按 + 從 0 開始
       const effectiveShares = isManual ? 0 : currentShares
+
       setManualAmounts((prev) => ({ ...prev, [memberId]: null }))
-      if (!isParticipant) toggleParticipant(memberId)
+
+      if (!isParticipant) {
+        toggleParticipant(memberId)
+      }
+
       setShares((prev) => ({
         ...prev,
         [memberId]: isParticipant ? effectiveShares + 1 : 1,
@@ -136,24 +150,34 @@ export function useExpenseForm({
     function onAmountChange(val: number | null) {
       if (val === null) {
         // 金額清空視為移除參與者，清掉手動金額與份數
-        if (isParticipant) toggleParticipant(memberId)
+        if (isParticipant) {
+          toggleParticipant(memberId)
+        }
+
         setManualAmounts((prev) => {
           const next = { ...prev }
           delete next[memberId]
+
           return next
         })
+
         setShares((prev) => {
           const next = { ...prev }
           delete next[memberId]
+
           return next
         })
         return
       }
-      if (!isParticipant) toggleParticipant(memberId)
+      if (!isParticipant) {
+        toggleParticipant(memberId)
+      }
+
       setManualAmounts((prev) => ({ ...prev, [memberId]: val }))
       setShares((prev) => {
         const next = { ...prev }
         delete next[memberId]
+
         return next
       })
     }

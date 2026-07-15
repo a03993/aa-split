@@ -62,11 +62,13 @@ function ScrollColumn({
   useEffect(() => {
     const scrollTop = getInitialScrollTop(value, items)
     const newCenteredIdx = Math.round(scrollTop / ITEM_HEIGHT)
+
     const raf = requestAnimationFrame(() => {
       if (ref.current) {
         ref.current.scrollTop = scrollTop
       }
     })
+
     setCenteredIdx(newCenteredIdx)
     return () => cancelAnimationFrame(raf)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,13 +76,19 @@ function ScrollColumn({
 
   const normalizeToMiddle = useCallback(() => {
     const el = ref.current
-    if (!el) return
+
+    if (!el) {
+      return
+    }
+
     const singleLen = items.length * ITEM_HEIGHT
     const midStart = MID_REPEAT * singleLen
     const midEnd = (MID_REPEAT + 1) * singleLen
+
     if (el.scrollTop < midStart || el.scrollTop >= midEnd) {
       const rawIdx = Math.round(el.scrollTop / ITEM_HEIGHT)
       const realIdx = ((rawIdx % items.length) + items.length) % items.length
+
       el.scrollTop = (MID_REPEAT * items.length + realIdx) * ITEM_HEIGHT
     }
   }, [items])
@@ -89,7 +97,11 @@ function ScrollColumn({
   const scrollToRepeatedIdx = useCallback(
     (repeatedIdx: number) => {
       const el = ref.current
-      if (!el || isSnapping.current) return
+
+      if (!el || isSnapping.current) {
+        return
+      }
+
       isSnapping.current = true
 
       const targetTop = repeatedIdx * ITEM_HEIGHT
@@ -98,7 +110,10 @@ function ScrollColumn({
       const realIdx = ((repeatedIdx % items.length) + items.length) % items.length
       onChange(items[realIdx])
 
-      if (snapTimer.current) clearTimeout(snapTimer.current)
+      if (snapTimer.current) {
+        clearTimeout(snapTimer.current)
+      }
+
       snapTimer.current = setTimeout(() => {
         isSnapping.current = false
         normalizeToMiddle()
@@ -109,20 +124,31 @@ function ScrollColumn({
 
   const snapToNearest = useCallback(() => {
     const el = ref.current
-    if (!el || isSnapping.current) return
+
+    if (!el || isSnapping.current) {
+      return
+    }
+
     const rawIdx = Math.round(el.scrollTop / ITEM_HEIGHT)
     const clamped = Math.max(0, Math.min(rawIdx, repeatedItems.length - 1))
+
     scrollToRepeatedIdx(clamped)
   }, [repeatedItems.length, scrollToRepeatedIdx])
 
   useEffect(() => {
     const el = ref.current
-    if (!el) return
+
+    if (!el) {
+      return
+    }
 
     el.addEventListener("scrollend", snapToNearest)
 
     function handleTouchEnd() {
-      if (touchEndTimer.current) clearTimeout(touchEndTimer.current)
+      if (touchEndTimer.current) {
+        clearTimeout(touchEndTimer.current)
+      }
+
       touchEndTimer.current = setTimeout(snapToNearest, 350)
     }
     el.addEventListener("touchend", handleTouchEnd)
@@ -130,20 +156,35 @@ function ScrollColumn({
     return () => {
       el.removeEventListener("scrollend", snapToNearest)
       el.removeEventListener("touchend", handleTouchEnd)
-      if (touchEndTimer.current) clearTimeout(touchEndTimer.current)
-      if (snapTimer.current) clearTimeout(snapTimer.current)
+
+      if (touchEndTimer.current) {
+        clearTimeout(touchEndTimer.current)
+      }
+
+      if (snapTimer.current) {
+        clearTimeout(snapTimer.current)
+      }
     }
   }, [snapToNearest])
 
   useEffect(() => {
     const el = ref.current
-    if (!el) return
+
+    if (!el) {
+      return
+    }
+
     function handleScroll() {
-      if (!el) return
+      if (!el) {
+        return
+      }
+
       const next = Math.round(el.scrollTop / ITEM_HEIGHT)
+
       // 只在整格邊界變化時才觸發 re-render
       setCenteredIdx((prev) => (prev === next ? prev : next))
     }
+
     el.addEventListener("scroll", handleScroll, { passive: true })
     return () => el.removeEventListener("scroll", handleScroll)
   }, [])
@@ -173,28 +214,35 @@ function ScrollColumn({
         }}
       >
         <div style={{ height: ITEM_HEIGHT * 2 }} />
-        {repeatedItems.map((item, i) => {
-          const dist = Math.abs(i - centeredIdx)
-          return (
-            <div
-              key={i}
-              style={{ height: ITEM_HEIGHT, scrollSnapAlign: "center" }}
-              className={cn(
-                "flex cursor-pointer items-center justify-center tabular-nums transition-all duration-150",
-                dist === 0
-                  ? "text-2xl font-semibold text-foreground"
-                  : dist === 1
-                    ? "text-xl font-normal text-foreground/60"
-                    : "text-lg font-normal text-foreground/30",
-              )}
-              onClick={() => scrollToRepeatedIdx(i)}
-            >
-              {item}
-            </div>
-          )
-        })}
+        {repeatedItems.map((item, i) => (
+          <TimeItem
+            key={i}
+            item={item}
+            dist={Math.abs(i - centeredIdx)}
+            onSelect={() => scrollToRepeatedIdx(i)}
+          />
+        ))}
         <div style={{ height: ITEM_HEIGHT * 2 }} />
       </div>
+    </div>
+  )
+}
+
+function TimeItem({ item, dist, onSelect }: { item: string; dist: number; onSelect: () => void }) {
+  return (
+    <div
+      style={{ height: ITEM_HEIGHT, scrollSnapAlign: "center" }}
+      className={cn(
+        "flex cursor-pointer items-center justify-center tabular-nums transition-all duration-150",
+        dist === 0
+          ? "text-2xl font-semibold text-foreground"
+          : dist === 1
+            ? "text-xl font-normal text-foreground/60"
+            : "text-lg font-normal text-foreground/30",
+      )}
+      onClick={onSelect}
+    >
+      {item}
     </div>
   )
 }

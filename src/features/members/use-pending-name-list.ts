@@ -20,14 +20,20 @@ export function usePendingNameList({ existingNames }: UsePendingNameListOptions)
 
   function handleAdd() {
     const name = input.trim()
-    if (!name) return
+
+    if (!name) {
+      return
+    }
+
     if (existingNames.includes(name) || names.includes(name)) {
       setError("已有同名成員")
       return
     }
+
     setNames((prev) => [...prev, name])
     setInput("")
     setError("")
+
     inputRef.current?.focus()
   }
 

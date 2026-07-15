@@ -26,11 +26,15 @@ interface CategoryPickerDialogProps {
 }
 
 function getSuggestedIcon(label: string): string | undefined {
-  if (!label.trim()) return undefined
+  if (!label.trim()) {
+    return undefined
+  }
+
   const lower = label.toLowerCase()
   const matched = CUSTOM_CATEGORY_ICONS.find((c) =>
     c.keywords.some((k) => lower.includes(k) || k.includes(lower)),
   )
+
   return matched?.icon ?? CUSTOM_CATEGORY_ICONS[0].icon
 }
 
@@ -62,6 +66,7 @@ export function CategoryPickerDialog({
       setNewCategoryIcon(CUSTOM_CATEGORY_ICONS[0].icon)
       setIsIconPickerOpen(false)
     }
+
     setIsOpen(nextOpen)
   }
 
@@ -70,6 +75,7 @@ export function CategoryPickerDialog({
 
     if (label.trim()) {
       const suggested = getSuggestedIcon(label) ?? CUSTOM_CATEGORY_ICONS[0].icon
+
       setNewCategoryIcon(suggested)
       setSelectedKey(`pending_${suggested}`)
     } else {
@@ -80,7 +86,11 @@ export function CategoryPickerDialog({
 
   function handleIconChange(newIcon: string) {
     setNewCategoryIcon(newIcon)
-    if (newCategoryLabel.trim()) setSelectedKey(`pending_${newIcon}`)
+
+    if (newCategoryLabel.trim()) {
+      setSelectedKey(`pending_${newIcon}`)
+    }
+
     setIsIconPickerOpen(false)
   }
 
@@ -92,7 +102,9 @@ export function CategoryPickerDialog({
   }
 
   function handleConfirm() {
-    if (!selectedKey) return
+    if (!selectedKey) {
+      return
+    }
 
     const newCategory: Category | undefined = newCategoryLabel.trim()
       ? { key: selectedKey, label: newCategoryLabel.trim(), icon: newCategoryIcon }
@@ -124,34 +136,14 @@ export function CategoryPickerDialog({
         <DialogTitle>選擇分類</DialogTitle>
 
         <div className="flex flex-1 flex-col overflow-y-auto">
-          {allCategories.map((cat) => {
-            const isSelected = selectedKey === cat.key
-            const Icon = getCategoryIcon(cat.icon)
-
-            return (
-              <Button
-                key={cat.key}
-                variant="ghost"
-                className={cn("justify-between", isSelected && "font-medium")}
-                onClick={() => handleListSelect(cat.key)}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "flex items-center justify-center rounded-full p-2",
-                      isSelected ? "bg-primary [&_svg]:stroke-white" : "bg-muted",
-                    )}
-                  >
-                    <Icon />
-                  </span>
-                  {cat.label}
-                </div>
-                <CheckIcon
-                  className={cn("size-4 text-primary", isSelected ? "visible" : "invisible")}
-                />
-              </Button>
-            )
-          })}
+          {allCategories.map((cat) => (
+            <CategoryListItem
+              key={cat.key}
+              category={cat}
+              isSelected={selectedKey === cat.key}
+              onSelect={() => handleListSelect(cat.key)}
+            />
+          ))}
 
           <div className="flex flex-col gap-2 px-4 py-3">
             <div className="flex items-center gap-2">
@@ -190,33 +182,15 @@ export function CategoryPickerDialog({
 
             {isIconPickerOpen && (
               <div className="flex flex-wrap gap-2 pt-1">
-                {CUSTOM_CATEGORY_ICONS.map((iconOption) => {
-                  const isSelected = newCategoryIcon === iconOption.icon
-                  const isRecommended =
-                    !!newCategoryLabel.trim() && iconOption.icon === suggestedIcon
-                  const Icon = getCategoryIcon(iconOption.icon)
-                  return (
-                    <button
-                      key={iconOption.icon}
-                      className="relative"
-                      onClick={() => handleIconChange(iconOption.icon)}
-                    >
-                      <span
-                        className={cn(
-                          "flex h-11 w-11 items-center justify-center rounded-full",
-                          isSelected ? "bg-primary [&_svg]:stroke-white" : "bg-muted",
-                        )}
-                      >
-                        <Icon size={18} />
-                      </span>
-                      {isRecommended && (
-                        <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[9px] leading-4 text-primary-foreground">
-                          推薦
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+                {CUSTOM_CATEGORY_ICONS.map((iconOption) => (
+                  <IconOptionItem
+                    key={iconOption.icon}
+                    icon={iconOption.icon}
+                    isSelected={newCategoryIcon === iconOption.icon}
+                    isRecommended={!!newCategoryLabel.trim() && iconOption.icon === suggestedIcon}
+                    onSelect={() => handleIconChange(iconOption.icon)}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -238,5 +212,70 @@ export function CategoryPickerDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function CategoryListItem({
+  category,
+  isSelected,
+  onSelect,
+}: {
+  category: Category
+  isSelected: boolean
+  onSelect: () => void
+}) {
+  const Icon = getCategoryIcon(category.icon)
+
+  return (
+    <Button
+      variant="ghost"
+      className={cn("justify-between", isSelected && "font-medium")}
+      onClick={onSelect}
+    >
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "flex items-center justify-center rounded-full p-2",
+            isSelected ? "bg-primary [&_svg]:stroke-white" : "bg-muted",
+          )}
+        >
+          <Icon />
+        </span>
+        {category.label}
+      </div>
+      <CheckIcon className={cn("size-4 text-primary", isSelected ? "visible" : "invisible")} />
+    </Button>
+  )
+}
+
+function IconOptionItem({
+  icon,
+  isSelected,
+  isRecommended,
+  onSelect,
+}: {
+  icon: string
+  isSelected: boolean
+  isRecommended: boolean
+  onSelect: () => void
+}) {
+  const Icon = getCategoryIcon(icon)
+
+  return (
+    <button className="relative" onClick={onSelect}>
+      <span
+        className={cn(
+          "flex h-11 w-11 items-center justify-center rounded-full",
+          isSelected ? "bg-primary [&_svg]:stroke-white" : "bg-muted",
+        )}
+      >
+        <Icon size={18} />
+      </span>
+      {isRecommended && (
+        <span className="absolute -right-1 -top-1 rounded-full bg-primary px-1 text-[9px] leading-4 text-primary-foreground">
+          推薦
+        </span>
+      )}
+    </button>
   )
 }

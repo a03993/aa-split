@@ -28,15 +28,21 @@ function generateId(prefix: string): string {
 
 function applyPendingCategory(bookId: string, category: Category): void {
   const book = _mockBooks.find((b) => b.id === bookId)
-  if (!book) return
+
+  if (!book) {
+    return
+  }
+
   book.custom_categories = [...book.custom_categories, category]
 }
 
 function requireMember(memberId: string): MemberRow {
   const member = members.find((m) => m.id === memberId)
+
   if (!member) {
     throw new Error(`MockExpenseRepository: member "${memberId}" not found`)
   }
+
   return member
 }
 
@@ -48,6 +54,7 @@ function buildExpenseWithDetails(expense: ExpenseRow): ExpenseWithDetails {
       ...s,
       member: requireMember(s.member_id),
     }))
+
   return {
     ...expense,
     payer,
@@ -58,11 +65,16 @@ function buildExpenseWithDetails(expense: ExpenseRow): ExpenseWithDetails {
 export class MockExpenseRepository implements ExpenseRepository {
   async findByBookId(bookId: string): Promise<ExpenseWithDetails[]> {
     await delay()
+
     return expenses
       .filter((e) => e.book_id === bookId)
       .sort((a, b) => {
         const dateCompare = b.date.localeCompare(a.date)
-        if (dateCompare !== 0) return dateCompare
+
+        if (dateCompare !== 0) {
+          return dateCompare
+        }
+
         return b.created_at.localeCompare(a.created_at)
       })
       .map(buildExpenseWithDetails)
@@ -70,6 +82,7 @@ export class MockExpenseRepository implements ExpenseRepository {
 
   async create(data: CreateExpenseInput): Promise<ExpenseRow> {
     await delay()
+
     const now = new Date().toISOString()
     const newExpense: ExpenseRow = {
       id: generateId("mock-expense"),
@@ -84,6 +97,7 @@ export class MockExpenseRepository implements ExpenseRepository {
       created_at: now,
       updated_at: now,
     }
+
     expenses.push(newExpense)
 
     for (const split of data.splits) {
@@ -95,17 +109,22 @@ export class MockExpenseRepository implements ExpenseRepository {
         shares: split.shares,
         created_at: now,
       }
+
       splits.push(newSplit)
     }
 
-    if (data.pendingCategory) applyPendingCategory(data.bookId, data.pendingCategory)
+    if (data.pendingCategory) {
+      applyPendingCategory(data.bookId, data.pendingCategory)
+    }
 
     return { ...newExpense }
   }
 
   async update(data: UpdateExpenseInput): Promise<ExpenseRow> {
     await delay()
+
     const expenseIndex = expenses.findIndex((e) => e.id === data.expenseId)
+
     if (expenseIndex === -1) {
       throw new Error(`MockExpenseRepository: expense "${data.expenseId}" not found`)
     }
@@ -124,6 +143,7 @@ export class MockExpenseRepository implements ExpenseRepository {
     }
 
     let i = splits.length - 1
+
     while (i >= 0) {
       if (splits[i].expense_id === data.expenseId) {
         splits.splice(i, 1)
@@ -142,20 +162,26 @@ export class MockExpenseRepository implements ExpenseRepository {
       })
     }
 
-    if (data.pendingCategory) applyPendingCategory(data.bookId, data.pendingCategory)
+    if (data.pendingCategory) {
+      applyPendingCategory(data.bookId, data.pendingCategory)
+    }
 
     return { ...expenses[expenseIndex] }
   }
 
   async delete(expenseId: string): Promise<void> {
     await delay()
+
     const expenseIndex = expenses.findIndex((e) => e.id === expenseId)
+
     if (expenseIndex === -1) {
       throw new Error(`MockExpenseRepository: expense "${expenseId}" not found`)
     }
+
     expenses.splice(expenseIndex, 1)
 
     let i = splits.length - 1
+
     while (i >= 0) {
       if (splits[i].expense_id === expenseId) {
         splits.splice(i, 1)

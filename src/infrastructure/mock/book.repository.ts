@@ -32,21 +32,29 @@ function generateId(prefix: string): string {
 export class MockBookRepository implements BookRepository {
   async findById(id: string): Promise<BookWithMembers | null> {
     await delay()
+
     const book = books.find((b) => b.id === id)
-    if (!book) return null
+
+    if (!book) {
+      return null
+    }
+
     return buildBookWithMembers(book)
   }
 
   async findByUserId(userId: string): Promise<BookWithMembers[]> {
     await delay()
+
     const userBookIds = new Set(
       members.filter((m) => m.profile_id === userId).map((m) => m.book_id),
     )
+
     return books.filter((b) => userBookIds.has(b.id)).map(buildBookWithMembers)
   }
 
   async create(data: CreateBookInput): Promise<BookRow> {
     await delay()
+
     const now = new Date().toISOString()
     const newBook: BookRow = {
       id: generateId("mock-book"),
@@ -60,6 +68,7 @@ export class MockBookRepository implements BookRepository {
       created_at: now,
       updated_at: now,
     }
+
     books.push(newBook)
 
     const ownerMember: Member = {
@@ -70,6 +79,7 @@ export class MockBookRepository implements BookRepository {
       created_at: now,
       profile: null,
     }
+
     members.push(ownerMember)
 
     for (const name of data.memberNames) {
@@ -94,10 +104,13 @@ export class MockBookRepository implements BookRepository {
     exchangeRate?: number | null,
   ): Promise<void> {
     await delay()
+
     const book = books.find((b) => b.id === bookId)
+
     if (!book) {
       throw new Error(`MockBookRepository: book "${bookId}" not found`)
     }
+
     book.settled_at = new Date().toISOString()
     book.settlement_currency = settlementCurrency ?? null
     book.exchange_rate = exchangeRate ?? null
@@ -107,6 +120,7 @@ export class MockBookRepository implements BookRepository {
     // 同時更新 book.settled_at 並插入 settlement rows 的行為。
     if (settlements.length > 0) {
       const now = new Date().toISOString()
+
       settlements.forEach((s) => {
         _mockSettlements.push({
           id: s.id ?? generateId("mock-settlement"),
@@ -122,9 +136,15 @@ export class MockBookRepository implements BookRepository {
 
   async addCategory(bookId: string, category: Category): Promise<BookRow> {
     await delay()
+
     const book = books.find((b) => b.id === bookId)
-    if (!book) throw new Error(`MockBookRepository: book "${bookId}" not found`)
+
+    if (!book) {
+      throw new Error(`MockBookRepository: book "${bookId}" not found`)
+    }
+
     book.custom_categories = [...book.custom_categories, category]
+
     return { ...book }
   }
 }

@@ -7,11 +7,75 @@ import { Minus, Plus } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import type { useExpenseForm } from "@/features/expenses/use-expense-form"
 import { getCurrencySymbol } from "@/lib/currencies"
 import { cn } from "@/lib/utils"
 import type { Member } from "@/types/app.types"
 
-export function ParticipantAmountItem({
+export function EqualSplit({
+  member,
+  checked,
+  onToggle,
+}: {
+  member: Member
+  checked: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="flex flex-col items-center gap-1 rounded-lg p-2 active:bg-muted/50"
+      onClick={onToggle}
+    >
+      <Avatar
+        className={cn(checked && "ring-2 ring-black ring-offset-1", !checked && "opacity-40")}
+      >
+        {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
+        <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
+      </Avatar>
+      <span className={cn("text-sm", !checked && "text-muted-foreground")}>
+        {member.display_name}
+      </span>
+    </button>
+  )
+}
+
+export function CustomSplit({
+  member,
+  isParticipant,
+  manualAmount,
+  shares,
+  displayAmount,
+  currency,
+  createSplitHandlers,
+}: {
+  member: Member
+  isParticipant: boolean
+  manualAmount: number | null | undefined
+  shares: number
+  displayAmount: number
+  currency: string
+  createSplitHandlers: ReturnType<typeof useExpenseForm>["createSplitHandlers"]
+}) {
+  const isManual = manualAmount != null
+  const { onShareDecrement, onShareIncrement, onAmountChange } = createSplitHandlers(member.id)
+
+  return (
+    <AmountItem
+      member={member}
+      isParticipant={isParticipant}
+      isManual={isManual}
+      shares={shares}
+      displayAmount={isManual ? (manualAmount ?? 0) : displayAmount}
+      currency={currency}
+      onShareDecrement={onShareDecrement}
+      onShareIncrement={onShareIncrement}
+      onAmountChange={onAmountChange}
+    />
+  )
+}
+
+function AmountItem({
   member,
   isParticipant,
   isManual,
@@ -37,8 +101,9 @@ export function ParticipantAmountItem({
   const value = prevValue !== null ? prevValue : displayAmount > 0 ? String(displayAmount) : ""
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setPrevValue(e.target.value)
     const parsedAmount = parseFloat(e.target.value)
+
+    setPrevValue(e.target.value)
     onAmountChange(isNaN(parsedAmount) ? null : parsedAmount)
   }
 

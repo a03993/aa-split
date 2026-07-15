@@ -29,7 +29,7 @@ import {
 import { TimePickerDialog } from "@/components/ui/time-picker-dialog"
 import type { CreateExpenseInput } from "@/domain/expense/expense.repository"
 import { CategoryPickerDialog } from "@/features/expenses/components/category-picker-dialog"
-import { ParticipantAmountItem } from "@/features/expenses/components/participant-amount-item"
+import { CustomSplit, EqualSplit } from "@/features/expenses/components/participant"
 import { SPLIT_MODES, useExpenseForm } from "@/features/expenses/use-expense-form"
 import { getCurrencySymbol } from "@/lib/currencies"
 import { cn } from "@/lib/utils"
@@ -47,12 +47,13 @@ interface AddExpenseSheetProps {
   onOpenChange?: (open: boolean) => void
 }
 
-function getCurrentTime(): { hour: string; minute: string } {
+function getCurrentTime(): string {
   const now = new Date()
-  return {
-    hour: String(now.getHours()).padStart(2, "0"),
-    minute: String(now.getMinutes()).padStart(2, "0"),
-  }
+
+  const hour = String(now.getHours()).padStart(2, "0")
+  const minute = String(now.getMinutes()).padStart(2, "0")
+
+  return `${hour}:${minute}`
 }
 
 export function AddExpenseSheet({
@@ -72,10 +73,10 @@ export function AddExpenseSheet({
 
   function buildInitialFormValues() {
     const today = new Date()
-    const nowRounded = getCurrentTime()
+
     return {
       date: format(today, "yyyy-MM-dd"),
-      time: `${nowRounded.hour}:${nowRounded.minute}`,
+      time: getCurrentTime(),
       category: "",
       title: "",
       amount: undefined as unknown as number,
@@ -131,9 +132,8 @@ export function AddExpenseSheet({
 
   // formDate 字串轉 Date 物件供 DatePickerDialog 使用
   const dateObj = formDate ? new Date(formDate + "T00:00:00") : new Date()
-  const [selectedHour, selectedMinute] = formTime
-    ? formTime.split(":")
-    : [getCurrentTime().hour, getCurrentTime().minute]
+  const timeValue = formTime || getCurrentTime()
+  const [selectedHour, selectedMinute] = timeValue.split(":")
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
@@ -152,9 +152,21 @@ export function AddExpenseSheet({
     }
   }
 
+  function handleCategoryConfirm(value: string, newCategory?: Category) {
+    setValue("category", value, { shouldValidate: true })
+
+    if (newCategory) {
+      setPendingCategories((prev) => [...prev, newCategory])
+    }
+  }
+
   const handleFormSubmit = handleSubmit((data) => {
     const payload = buildSubmitPayload(data)
-    if (!payload) return
+
+    if (!payload) {
+      return
+    }
+
     onSubmit(
       {
         bookId,
@@ -170,6 +182,7 @@ export function AddExpenseSheet({
       },
       isNotify,
     )
+
     handleOpenChange(false)
   })
 
@@ -224,10 +237,7 @@ export function AddExpenseSheet({
                 value={formCategory}
                 hasError={!!errors.category}
                 customCategories={[...customCategories, ...pendingCategories]}
-                onConfirm={(val, pending) => {
-                  setValue("category", val, { shouldValidate: true })
-                  if (pending) setPendingCategories((prev) => [...prev, pending])
-                }}
+                onConfirm={handleCategoryConfirm}
               />
               {errors.category && (
                 <p className="text-xs text-destructive">{errors.category.message}</p>
@@ -320,57 +330,29 @@ export function AddExpenseSheet({
 
             {splitMode === "equal" ? (
               <div className="flex flex-row flex-wrap gap-2 py-2">
-                {members.map((member) => {
-                  const checked = participantIds.includes(member.id)
-                  return (
-                    <button
-                      key={member.id}
-                      className="flex flex-col items-center gap-1 rounded-lg p-2 active:bg-muted/50"
-                      onClick={() => toggleParticipant(member.id)}
-                    >
-                      <Avatar
-                        className={cn(
-                          checked && "ring-2 ring-black ring-offset-1",
-                          !checked && "opacity-40",
-                        )}
-                      >
-                        {member.profile?.avatar_url && (
-                          <AvatarImage src={member.profile.avatar_url} />
-                        )}
-                        <AvatarFallback>
-                          {member.display_name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className={cn("text-sm", !checked && "text-muted-foreground")}>
-                        {member.display_name}
-                      </span>
-                    </button>
-                  )
-                })}
+                {members.map((member) => (
+                  <EqualSplit
+                    key={member.id}
+                    member={member}
+                    checked={participantIds.includes(member.id)}
+                    onToggle={() => toggleParticipant(member.id)}
+                  />
+                ))}
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                {members.map((member) => {
-                  const isManual = manualAmounts[member.id] != null
-                  const memberShares = shares[member.id] ?? 1
-                  const displayAmount = splitAmounts[member.id] ?? 0
-                  const { onShareDecrement, onShareIncrement, onAmountChange } =
-                    createSplitHandlers(member.id)
-                  return (
-                    <ParticipantAmountItem
-                      key={member.id}
-                      member={member}
-                      isParticipant={participantIds.includes(member.id)}
-                      isManual={isManual}
-                      shares={memberShares}
-                      displayAmount={isManual ? (manualAmounts[member.id] ?? 0) : displayAmount}
-                      currency={currency}
-                      onShareDecrement={onShareDecrement}
-                      onShareIncrement={onShareIncrement}
-                      onAmountChange={onAmountChange}
-                    />
-                  )
-                })}
+                {members.map((member) => (
+                  <CustomSplit
+                    key={member.id}
+                    member={member}
+                    isParticipant={participantIds.includes(member.id)}
+                    manualAmount={manualAmounts[member.id]}
+                    shares={shares[member.id] ?? 1}
+                    displayAmount={splitAmounts[member.id] ?? 0}
+                    currency={currency}
+                    createSplitHandlers={createSplitHandlers}
+                  />
+                ))}
               </div>
             )}
 

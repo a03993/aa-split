@@ -25,7 +25,10 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
   const initialised = useRef(false)
 
   useEffect(() => {
-    if (initialised.current) return
+    if (initialised.current) {
+      return
+    }
+
     initialised.current = true
 
     async function bootstrap() {
@@ -44,6 +47,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
           avatarUrl: "",
           lineUserId: null,
         })
+
         return
       }
 
@@ -53,6 +57,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
         const authService = new AuthService(liffService, supabase)
 
         const result = await authService.initialize(liffId)
+
         switch (result.status) {
           case "authenticated":
             setAuthenticated(result.user)

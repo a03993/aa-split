@@ -26,7 +26,10 @@ export class SupabaseBookRepository implements BookRepository {
       .single()
 
     if (error) {
-      if (error.code === "PGRST116") return null
+      if (error.code === "PGRST116") {
+        return null
+      }
+
       throw new Error(`Failed to fetch book by id "${id}": ${error.message}`)
     }
 
@@ -119,12 +122,14 @@ export class SupabaseBookRepository implements BookRepository {
         .from("books")
         .delete()
         .eq("id", bookRow.id)
+
       if (rollbackError) {
         console.error(
           `[book.create] Rollback 失敗，孤兒 book "${bookRow.id}" 需人工清理:`,
           rollbackError,
         )
       }
+
       throw new Error(`Failed to create members for book "${bookRow.id}": ${membersError.message}`)
     }
 
@@ -161,12 +166,14 @@ export class SupabaseBookRepository implements BookRepository {
           .from("books")
           .update({ settled_at: null, settlement_currency: null, exchange_rate: null })
           .eq("id", bookId)
+
         if (rollbackError) {
           console.error(
             `[book.settle] Rollback 失敗，bookId="${bookId}" 已標記結算但無結算資料:`,
             rollbackError,
           )
         }
+
         throw new Error(
           `Failed to insert settlements for book "${bookId}": ${settlementsError.message}`,
         )

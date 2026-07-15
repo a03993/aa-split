@@ -73,6 +73,10 @@ export function SettlementSheet({
 
   const memberMap = useMemo(() => new Map(members.map((member) => [member.id, member])), [members])
 
+  const membersWithBalance = members
+    .map((member) => ({ member, balance: balances.get(member.id) ?? 0 }))
+    .filter(({ balance }) => balance !== 0)
+
   function getMemberName(id: string) {
     return memberMap.get(id)?.display_name ?? id
   }
@@ -84,12 +88,22 @@ export function SettlementSheet({
 
   function getConvertedAmount(amount: number): number | null {
     if (isSettled) {
-      if (!settledExchangeRate || settledExchangeRate <= 0) return null
+      if (!settledExchangeRate || settledExchangeRate <= 0) {
+        return null
+      }
+
       return amount * settledExchangeRate
     }
-    if (!enableConversion) return null
+
+    if (!enableConversion) {
+      return null
+    }
+
     const rate = Number(exchangeRateInput)
-    if (!exchangeRateInput || Number.isNaN(rate) || rate <= 0) return null
+
+    if (!exchangeRateInput || Number.isNaN(rate) || rate <= 0) {
+      return null
+    }
     return amount * rate
   }
 
@@ -100,17 +114,20 @@ export function SettlementSheet({
       setExchangeRateInput("")
       setRateError("")
     }
+
     setIsOpen(nextOpen)
   }
 
   function handleSettle() {
     if (enableConversion) {
       const rate = Number(exchangeRateInput)
+
       if (!exchangeRateInput || Number.isNaN(rate) || rate <= 0) {
         setRateError("請輸入正確匯率")
         return
       }
     }
+
     setRateError("")
     setIsSettleConfirmOpen(true)
   }
@@ -148,57 +165,19 @@ export function SettlementSheet({
               <p className="mb-1 text-xs font-medium tracking-wide text-muted-foreground">
                 收支結果
               </p>
-              {members.every((m) => (balances.get(m.id) ?? 0) === 0) ? (
+              {membersWithBalance.length === 0 ? (
                 <p className="py-2 text-sm text-muted-foreground">所有人收支平衡</p>
               ) : (
-                members.map((member) => {
-                  const balance = balances.get(member.id) ?? 0
-                  if (balance === 0) return null
-                  const isPositive = balance > 0
-                  const isNegative = balance < 0
-                  const converted = getConvertedAmount(balance)
-
-                  return (
-                    <div key={member.id} className="flex items-center justify-between py-1.5">
-                      <div className="flex items-center gap-2">
-                        <Avatar size="md">
-                          {member.profile?.avatar_url && (
-                            <AvatarImage src={member.profile.avatar_url} />
-                          )}
-                          <AvatarFallback>
-                            {member.display_name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-base font-normal text-foreground">
-                          {member.display_name}
-                        </span>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span
-                          className={cn(
-                            "text-sm font-semibold",
-                            isPositive && "text-success",
-                            isNegative && "text-destructive",
-                            !isPositive && !isNegative && "text-muted-foreground",
-                          )}
-                        >
-                          {isPositive ? "+" : ""}
-                          {converted !== null
-                            ? formatCurrency(converted, displayCurrency)
-                            : formatCurrency(balance, currency)}
-                        </span>
-                        <span
-                          className={cn(
-                            "text-xs text-muted-foreground",
-                            converted === null && "invisible",
-                          )}
-                        >
-                          {formatCurrency(balance, currency)}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })
+                membersWithBalance.map(({ member, balance }) => (
+                  <BalanceItem
+                    key={member.id}
+                    member={member}
+                    balance={balance}
+                    currency={currency}
+                    displayCurrency={displayCurrency}
+                    convertedAmount={getConvertedAmount(balance)}
+                  />
+                ))
               )}
             </div>
 
@@ -367,5 +346,54 @@ export function SettlementSheet({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+function BalanceItem({
+  member,
+  balance,
+  currency,
+  displayCurrency,
+  convertedAmount,
+}: {
+  member: Member
+  balance: number
+  currency: string
+  displayCurrency: string
+  convertedAmount: number | null
+}) {
+  const isPositive = balance > 0
+  const isNegative = balance < 0
+
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <div className="flex items-center gap-2">
+        <Avatar size="md">
+          {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
+          <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <span className="text-base font-normal text-foreground">{member.display_name}</span>
+      </div>
+      <div className="flex flex-col items-end">
+        <span
+          className={cn(
+            "text-sm font-semibold",
+            isPositive && "text-success",
+            isNegative && "text-destructive",
+            !isPositive && !isNegative && "text-muted-foreground",
+          )}
+        >
+          {isPositive ? "+" : ""}
+          {convertedAmount !== null
+            ? formatCurrency(convertedAmount, displayCurrency)
+            : formatCurrency(balance, currency)}
+        </span>
+        <span
+          className={cn("text-xs text-muted-foreground", convertedAmount === null && "invisible")}
+        >
+          {formatCurrency(balance, currency)}
+        </span>
+      </div>
+    </div>
   )
 }

@@ -79,24 +79,46 @@ export function MemberDialog({
   })
 
   function handleOpenChange(next: boolean) {
-    if (!next) resetPendingList()
+    if (!next) {
+      resetPendingList()
+    }
+
     setIsOpen(next)
   }
 
   function handleAddMembers() {
-    if (pendingNames.length === 0) return
+    if (pendingNames.length === 0) {
+      return
+    }
+
     onAdd(pendingNames, resetPendingList)
   }
 
+  function handleRequestRemove(member: Member) {
+    if (memberIdsInExpenses.has(member.id)) {
+      toast.info("此成員已有費用記錄，無法移除")
+      return
+    }
+
+    setMemberToRemove(member)
+  }
+
   function handleConfirmRemove() {
-    if (!memberToRemove) return
+    if (!memberToRemove) {
+      return
+    }
+
     onRemove(memberToRemove.id)
     setMemberToRemove(null)
   }
 
   function handleConfirmLeave() {
     const selfMember = members.find((m) => m.profile_id === currentUserId)
-    if (!selfMember) return
+
+    if (!selfMember) {
+      return
+    }
+
     onLeave(selfMember.id, () => handleOpenChange(false))
     setLeaveConfirmOpen(false)
   }
@@ -117,61 +139,20 @@ export function MemberDialog({
           </DialogHeader>
 
           <div className="flex flex-1 flex-col divide-y divide-border overflow-y-auto">
-            {members.map((member) => {
-              const isSelf = member.profile_id === currentUserId
-              const isOwnerMember = member.profile_id === ownerUserId
-              const inExpenses = memberIdsInExpenses.has(member.id)
-
-              return (
-                <div key={member.id} className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-2">
-                    <Avatar size="md">
-                      {member.profile?.avatar_url && (
-                        <AvatarImage src={member.profile.avatar_url} />
-                      )}
-                      <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-base font-normal text-foreground">
-                      {member.display_name}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    {isOwnerMember && <Badge>創建人</Badge>}
-                    {!isSettled && isOwner && member.profile_id && !isSelf && (
-                      <Button variant="ghost" size="icon-sm" onClick={() => onUnclaim(member.id)}>
-                        <Unlink2 />
-                      </Button>
-                    )}
-                    {!isSettled && isOwner && !isSelf && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        className={cn(inExpenses && "opacity-50")}
-                        onClick={() => {
-                          if (inExpenses) {
-                            toast.info("此成員已有費用記錄，無法移除")
-                            return
-                          }
-                          setMemberToRemove(member)
-                        }}
-                      >
-                        <CircleMinus />
-                      </Button>
-                    )}
-                    {!isSettled && !isOwner && isSelf && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setLeaveConfirmOpen(true)}
-                      >
-                        <LogOut />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+            {members.map((member) => (
+              <MemberItem
+                key={member.id}
+                member={member}
+                isSelf={member.profile_id === currentUserId}
+                isOwnerMember={member.profile_id === ownerUserId}
+                isOwner={isOwner}
+                isSettled={isSettled}
+                inExpenses={memberIdsInExpenses.has(member.id)}
+                onUnclaim={() => onUnclaim(member.id)}
+                onRequestRemove={() => handleRequestRemove(member)}
+                onLeave={() => setLeaveConfirmOpen(true)}
+              />
+            ))}
           </div>
 
           {!isSettled && !isOwner && (
@@ -259,7 +240,9 @@ export function MemberDialog({
       <AlertDialog
         open={!!memberToRemove}
         onOpenChange={(next) => {
-          if (!next) setMemberToRemove(null)
+          if (!next) {
+            setMemberToRemove(null)
+          }
         }}
       >
         <AlertDialogContent>
@@ -291,5 +274,63 @@ export function MemberDialog({
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+function MemberItem({
+  member,
+  isSelf,
+  isOwnerMember,
+  isOwner,
+  isSettled,
+  inExpenses,
+  onUnclaim,
+  onRequestRemove,
+  onLeave,
+}: {
+  member: Member
+  isSelf: boolean
+  isOwnerMember: boolean
+  isOwner: boolean
+  isSettled: boolean
+  inExpenses: boolean
+  onUnclaim: () => void
+  onRequestRemove: () => void
+  onLeave: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-2">
+        <Avatar size="md">
+          {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
+          <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <span className="text-base font-normal text-foreground">{member.display_name}</span>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {isOwnerMember && <Badge>創建人</Badge>}
+        {!isSettled && isOwner && member.profile_id && !isSelf && (
+          <Button variant="ghost" size="icon-sm" onClick={onUnclaim}>
+            <Unlink2 />
+          </Button>
+        )}
+        {!isSettled && isOwner && !isSelf && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className={cn(inExpenses && "opacity-50")}
+            onClick={onRequestRemove}
+          >
+            <CircleMinus />
+          </Button>
+        )}
+        {!isSettled && !isOwner && isSelf && (
+          <Button variant="ghost" size="icon-sm" onClick={onLeave}>
+            <LogOut />
+          </Button>
+        )}
+      </div>
+    </div>
   )
 }

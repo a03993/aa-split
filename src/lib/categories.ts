@@ -125,7 +125,9 @@ export function getCategoryLabel(
 ): string {
   const custom = customCategories?.find((c) => c.key === key)
 
-  if (custom) return custom.label
+  if (custom) {
+    return custom.label
+  }
 
   const category = DEFAULT_CATEGORIES.find((c) => c.key === key)
 

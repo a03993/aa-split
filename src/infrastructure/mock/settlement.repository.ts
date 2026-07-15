@@ -19,6 +19,7 @@ function generateId(prefix: string): string {
 export class MockSettlementRepository implements SettlementRepository {
   async findByBookId(bookId: string): Promise<SettlementRow[]> {
     await delay()
+
     return _mockSettlements
       .filter((s) => s.book_id === bookId)
       .sort((a, b) => a.created_at.localeCompare(b.created_at))
@@ -26,7 +27,10 @@ export class MockSettlementRepository implements SettlementRepository {
 
   async createBatch(incoming: SettlementInsert[]): Promise<SettlementRow[]> {
     await delay()
-    if (incoming.length === 0) return []
+
+    if (incoming.length === 0) {
+      return []
+    }
 
     const now = new Date().toISOString()
     const newRows: SettlementRow[] = incoming.map(
@@ -41,6 +45,7 @@ export class MockSettlementRepository implements SettlementRepository {
     )
 
     _mockSettlements.push(...newRows)
+
     return newRows.map((r) => ({ ...r }))
   }
 }
