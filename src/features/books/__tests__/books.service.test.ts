@@ -57,16 +57,19 @@ describe("BookService.settleBook", () => {
     await service.settleBook("book-1", [alice, bob], expenses)
 
     expect(settle).toHaveBeenCalledTimes(1)
-    expect(settle).toHaveBeenCalledWith("book-1", [
-      {
-        book_id: "book-1",
-        payer_member_id: "bob",
-        receiver_member_id: "alice",
-        amount: 50,
-        settlement_currency: null,
-        exchange_rate: null,
-      },
-    ])
+    expect(settle).toHaveBeenCalledWith(
+      "book-1",
+      [
+        {
+          book_id: "book-1",
+          payer_member_id: "bob",
+          receiver_member_id: "alice",
+          amount: 50,
+        },
+      ],
+      null,
+      null,
+    )
   })
 
   it("提供 settlementCurrency 與 exchangeRate 時一併寫入 settle 記錄", async () => {
@@ -80,16 +83,19 @@ describe("BookService.settleBook", () => {
 
     await service.settleBook("book-1", [alice, bob], expenses, "TWD", 0.22)
 
-    expect(settle).toHaveBeenCalledWith("book-1", [
-      {
-        book_id: "book-1",
-        payer_member_id: "bob",
-        receiver_member_id: "alice",
-        amount: 50,
-        settlement_currency: "TWD",
-        exchange_rate: 0.22,
-      },
-    ])
+    expect(settle).toHaveBeenCalledWith(
+      "book-1",
+      [
+        {
+          book_id: "book-1",
+          payer_member_id: "bob",
+          receiver_member_id: "alice",
+          amount: 50,
+        },
+      ],
+      "TWD",
+      0.22,
+    )
   })
 
   it("沒有費用時傳入空的 settlements 陣列", async () => {
@@ -99,7 +105,7 @@ describe("BookService.settleBook", () => {
 
     await service.settleBook("book-1", [makeMember("alice")], [])
 
-    expect(settle).toHaveBeenCalledWith("book-1", [])
+    expect(settle).toHaveBeenCalledWith("book-1", [], null, null)
   })
 
   it("repo.settle 失敗時，錯誤會往外拋出（不吞掉）", async () => {

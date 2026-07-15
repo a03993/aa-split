@@ -11,6 +11,11 @@ export interface BookRepository {
   findById(id: string): Promise<BookWithMembers | null>
   findByUserId(userId: string): Promise<BookWithMembers[]>
   create(data: CreateBookInput): Promise<BookRow>
-  settle(bookId: string, settlements: SettlementInsert[]): Promise<void>
+  settle(
+    bookId: string,
+    settlements: SettlementInsert[],
+    settlementCurrency?: string | null,
+    exchangeRate?: number | null,
+  ): Promise<void>
   addCategory(bookId: string, category: Category): Promise<BookRow>
 }

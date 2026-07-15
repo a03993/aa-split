@@ -60,7 +60,6 @@ export function GroupView({ bookId }: GroupViewProps) {
   // useMemo 保證未變動時參考穩定，避免下游 useMemo（currentMember/unclaimedMembers/totalAmount）誤判每次重算。
   const members = useMemo(() => bundle?.members ?? [], [bundle])
   const expenses = useMemo(() => bundle?.expenses ?? [], [bundle])
-  const settlementRecords = bundle?.settlements ?? []
 
   const claimMember = useClaimMember()
   const updateExpense = useUpdateExpense()
@@ -72,8 +71,6 @@ export function GroupView({ bookId }: GroupViewProps) {
   const settleBook = useSettleBook()
 
   const settlementPlan = useSettlementPlan(members, expenses)
-  // 同一次結算的 rows 共用同一組換算設定，取第一筆有值的即可代表整批
-  const settledConversion = settlementRecords.find((r) => r.settlement_currency && r.exchange_rate)
 
   const [claimDialogOpen, setClaimDialogOpen] = useState(false)
   const [claimDialogTrigger, setClaimDialogTrigger] = useState<ClaimDialogTrigger>("entry")
@@ -294,8 +291,8 @@ export function GroupView({ bookId }: GroupViewProps) {
         book={book}
         expenses={expenses}
         settlementPlan={settlementPlan}
-        settledCurrency={settledConversion?.settlement_currency ?? null}
-        settledExchangeRate={settledConversion?.exchange_rate ?? null}
+        settledCurrency={book.settlement_currency}
+        settledExchangeRate={book.exchange_rate}
         onAddExpense={handleAddExpense}
         onSettleConfirm={handleSettleConfirm}
         onSelectExpense={setSelectedExpense}

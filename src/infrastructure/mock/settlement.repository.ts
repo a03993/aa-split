@@ -36,8 +36,6 @@ export class MockSettlementRepository implements SettlementRepository {
         payer_member_id: s.payer_member_id,
         receiver_member_id: s.receiver_member_id,
         amount: s.amount,
-        settlement_currency: s.settlement_currency ?? null,
-        exchange_rate: s.exchange_rate ?? null,
         created_at: s.created_at ?? now,
       }),
     )

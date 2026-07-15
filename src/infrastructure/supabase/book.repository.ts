@@ -131,11 +131,18 @@ export class SupabaseBookRepository implements BookRepository {
     return bookRow as BookRow
   }
 
-  async settle(bookId: string, settlements: SettlementInsert[]): Promise<void> {
+  async settle(
+    bookId: string,
+    settlements: SettlementInsert[],
+    settlementCurrency?: string | null,
+    exchangeRate?: number | null,
+  ): Promise<void> {
     const { error: updateError } = await this.supabase
       .from("books")
       .update({
         settled_at: new Date().toISOString(),
+        settlement_currency: settlementCurrency ?? null,
+        exchange_rate: exchangeRate ?? null,
       })
       .eq("id", bookId)
 
@@ -149,10 +156,10 @@ export class SupabaseBookRepository implements BookRepository {
         .insert(settlements)
 
       if (settlementsError) {
-        // Rollback：將 settled_at 設回 null，確保 book 狀態與 settlement 資料一致。
+        // Rollback：將 settled_at 與換算設定設回結算前狀態，確保 book 狀態與 settlement 資料一致。
         const { error: rollbackError } = await this.supabase
           .from("books")
-          .update({ settled_at: null })
+          .update({ settled_at: null, settlement_currency: null, exchange_rate: null })
           .eq("id", bookId)
         if (rollbackError) {
           console.error(

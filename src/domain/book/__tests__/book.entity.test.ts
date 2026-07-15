@@ -7,6 +7,8 @@ const baseBook = {
   name: "旅遊",
   owner_id: "user-alice",
   settled_at: null,
+  settlement_currency: null,
+  exchange_rate: null,
   custom_categories: [],
   currency: "TWD",
   created_at: "2026-06-01T00:00:00Z",

@@ -53,6 +53,8 @@ export class MockBookRepository implements BookRepository {
       name: data.name,
       owner_id: data.ownerUserId,
       settled_at: null,
+      settlement_currency: null,
+      exchange_rate: null,
       custom_categories: [],
       currency: data.currency,
       created_at: now,
@@ -85,13 +87,20 @@ export class MockBookRepository implements BookRepository {
     return { ...newBook }
   }
 
-  async settle(bookId: string, settlements: SettlementInsert[]): Promise<void> {
+  async settle(
+    bookId: string,
+    settlements: SettlementInsert[],
+    settlementCurrency?: string | null,
+    exchangeRate?: number | null,
+  ): Promise<void> {
     await delay()
     const book = books.find((b) => b.id === bookId)
     if (!book) {
       throw new Error(`MockBookRepository: book "${bookId}" not found`)
     }
     book.settled_at = new Date().toISOString()
+    book.settlement_currency = settlementCurrency ?? null
+    book.exchange_rate = exchangeRate ?? null
     book.updated_at = new Date().toISOString()
 
     // 直接寫入共享的 _mockSettlements 陣列，模擬 Supabase 版 settle() 在同一操作中
@@ -105,8 +114,6 @@ export class MockBookRepository implements BookRepository {
           payer_member_id: s.payer_member_id,
           receiver_member_id: s.receiver_member_id,
           amount: s.amount,
-          settlement_currency: s.settlement_currency ?? null,
-          exchange_rate: s.exchange_rate ?? null,
           created_at: s.created_at ?? now,
         })
       })

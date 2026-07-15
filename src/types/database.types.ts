@@ -38,30 +38,36 @@ export type Database = {
           created_at: string
           currency: string
           custom_categories: Json | null
+          exchange_rate: number | null
           id: string
           name: string
           owner_id: string
           settled_at: string | null
+          settlement_currency: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           currency?: string
           custom_categories?: Json | null
+          exchange_rate?: number | null
           id?: string
           name: string
           owner_id: string
           settled_at?: string | null
+          settlement_currency?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           currency?: string
           custom_categories?: Json | null
+          exchange_rate?: number | null
           id?: string
           name?: string
           owner_id?: string
           settled_at?: string | null
+          settlement_currency?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -241,31 +247,25 @@ export type Database = {
           amount: number
           book_id: string
           created_at: string
-          exchange_rate: number | null
           id: string
           payer_member_id: string
           receiver_member_id: string
-          settlement_currency: string | null
         }
         Insert: {
           amount: number
           book_id: string
           created_at?: string
-          exchange_rate?: number | null
           id?: string
           payer_member_id: string
           receiver_member_id: string
-          settlement_currency?: string | null
         }
         Update: {
           amount?: number
           book_id?: string
           created_at?: string
-          exchange_rate?: number | null
           id?: string
           payer_member_id?: string
           receiver_member_id?: string
-          settlement_currency?: string | null
         }
         Relationships: [
           {

@@ -49,10 +49,8 @@ export class BookService {
       payer_member_id: t.fromMemberId,
       receiver_member_id: t.toMemberId,
       amount: t.amount,
-      settlement_currency: settlementCurrency ?? null,
-      exchange_rate: exchangeRate ?? null,
     }))
 
-    await this.repo.settle(bookId, settlements)
+    await this.repo.settle(bookId, settlements, settlementCurrency ?? null, exchangeRate ?? null)
   }
 }

@@ -120,6 +120,8 @@ export const MOCK_BOOK: BookRow = {
   name: "台北週末之旅",
   owner_id: MOCK_USER_ALICE_ID,
   settled_at: null,
+  settlement_currency: null,
+  exchange_rate: null,
   custom_categories: [],
   currency: "TWD",
   created_at: T_BOOK_CREATED,
