@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   // 受保護路徑清單：未登入用戶將被導向首頁。
   const isProtectedRoute = request.nextUrl.pathname.startsWith("/group/")
 
-  // 只驗證受保護路徑：getUser() 會打一次 Supabase Auth 網路請求，非受保護路徑不需此開銷。
+  // 只驗證受保護路徑：getClaims() 至少會抓一次 JWKS，非受保護路徑不需此開銷。
   if (!isProtectedRoute) {
     return NextResponse.next({ request })
   }
@@ -41,12 +41,11 @@ export async function middleware(request: NextRequest) {
   )
 
   // 刷新 auth session，確保 Server Components 能取得最新的用戶狀態。
-  // 此處必須使用 getUser()（向 Supabase Auth 伺服器驗證），不可改用 getSession()（僅信任本地 cookie）。
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // 用 getClaims() 而非 getSession()：本專案 JWT 用非對稱簽章（ES256），
+  // getClaims() 可透過 WebCrypto 本地驗證簽章，不必每次都打 Supabase Auth 伺服器（即 getUser() 的行為）。
+  const { data, error } = await supabase.auth.getClaims()
 
-  if (!user) {
+  if (error || !data) {
     const redirectUrl = request.nextUrl.clone()
 
     redirectUrl.pathname = "/"

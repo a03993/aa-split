@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { bookKeys } from "@/features/books/books.queries"
+import { bookKeys } from "@/features/books/books.query-keys"
 import { createMemberRepository } from "@/infrastructure/repository.factory"
 import type { Member, MemberRow } from "@/types/app.types"
 

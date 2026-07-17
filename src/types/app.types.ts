@@ -53,3 +53,10 @@ export interface DebtSummary {
   toMember: MemberRow
   amount: number
 }
+
+export interface BookBundle {
+  book: BookWithMembers | null
+  members: Member[]
+  expenses: ExpenseWithDetails[]
+  settlements: SettlementRow[]
+}

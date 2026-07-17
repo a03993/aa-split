@@ -3,7 +3,7 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import type { CreateExpenseInput, UpdateExpenseInput } from "@/domain/expense/expense.repository"
-import { bookKeys } from "@/features/books/books.queries"
+import { bookKeys } from "@/features/books/books.query-keys"
 import { LineNotificationService } from "@/infrastructure/notification/notification.service"
 import { createExpenseRepository } from "@/infrastructure/repository.factory"
 import type { Category, ExpenseRow, ExpenseWithDetails } from "@/types/app.types"
