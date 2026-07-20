@@ -41,13 +41,13 @@ export class RealLiffService implements LiffService {
     return liffInstance.isLoggedIn()
   }
 
-  login(): void {
+  login(options?: { redirectUri?: string }): void {
     if (!liffInstance) {
       console.warn("[RealLiff] login() called before initialize()")
       return
     }
 
-    liffInstance.login()
+    liffInstance.login(options)
   }
 
   logout(): void {

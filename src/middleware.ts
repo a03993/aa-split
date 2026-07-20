@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  // 受保護路徑清單：未登入用戶將被導向首頁。
+  // 受保護路徑清單：未登入用戶將被導向登入頁（並帶上 next 參數記住原本要去的頁面）。
   const isProtectedRoute = request.nextUrl.pathname.startsWith("/group/")
 
   // 只驗證受保護路徑：getClaims() 至少會抓一次 JWKS，非受保護路徑不需此開銷。
@@ -46,10 +46,12 @@ export async function middleware(request: NextRequest) {
   const { data, error } = await supabase.auth.getClaims()
 
   if (error || !data) {
+    const nextPath = request.nextUrl.pathname + request.nextUrl.search
     const redirectUrl = request.nextUrl.clone()
 
-    redirectUrl.pathname = "/"
-    redirectUrl.searchParams.set("redirected", "true")
+    redirectUrl.pathname = "/login"
+    redirectUrl.search = ""
+    redirectUrl.searchParams.set("next", nextPath)
 
     return NextResponse.redirect(redirectUrl)
   }

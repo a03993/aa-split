@@ -18,8 +18,8 @@ export class MockLiffService implements LiffService {
     return true
   }
 
-  login(): void {
-    console.log("[MockLiff] login called — no-op in mock mode")
+  login(options?: { redirectUri?: string }): void {
+    console.log("[MockLiff] login called — no-op in mock mode", options)
   }
 
   logout(): void {

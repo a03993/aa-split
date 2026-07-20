@@ -14,7 +14,8 @@ export interface LiffService {
 
   isLoggedIn(): boolean
 
-  login(): void
+  /** redirectUri 需與 LIFF endpoint URL 同源，用於外部瀏覽器登入完成後導回指定頁面。 */
+  login(options?: { redirectUri?: string }): void
 
   logout(): void
 
