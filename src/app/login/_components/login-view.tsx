@@ -47,6 +47,15 @@ export function LoginView() {
     )
   }
 
+  if (status === "error") {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <p className="text-sm text-muted-foreground">登入時發生錯誤，請重試</p>
+        <Button onClick={() => window.location.reload()}>重試</Button>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
       <div className="flex flex-col gap-1.5">

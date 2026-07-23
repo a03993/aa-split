@@ -91,11 +91,14 @@ export function GroupView({ bookId }: GroupViewProps) {
   }
 
   useEffect(() => {
-    if (isBundlePending) {
+    // user 還沒載入完成前，currentMember 一定算不到，不能拿來判斷「尚未認領」
+    if (isBundlePending || !user) {
       return
     }
 
     if (currentMember) {
+      // 把先前（user 還沒載入時）誤開的 dialog 收掉
+      setClaimDialogOpen(false)
       return
     }
 
@@ -106,7 +109,7 @@ export function GroupView({ bookId }: GroupViewProps) {
     claimDialogShownRef.current = true
 
     openClaimDialog("entry")
-  }, [isBundlePending, currentMember])
+  }, [isBundlePending, user, currentMember])
 
   const totalAmount = useMemo(() => expenses.reduce((sum, e) => sum + e.amount, 0), [expenses])
 

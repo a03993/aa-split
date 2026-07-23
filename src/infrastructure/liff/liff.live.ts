@@ -1,8 +1,8 @@
 "use client"
 
-// 正式 LIFF 實作，使用 @line/liff SDK。
-// 僅限客戶端：LIFF SDK 不支援 server/edge 環境。透過動態 import 將其排除在 server bundle 之外。
-import type { LiffProfile, LiffService } from "./liff.provider"
+// 正式 LIFF 實作，包 @line/liff SDK
+// 只能在瀏覽器跑，用動態 import 避免被打包進 server 端
+import type { LiffService } from "./liff.provider"
 
 let liffInstance: typeof import("@line/liff").default | null = null
 
@@ -18,7 +18,7 @@ async function getLiff(): Promise<typeof import("@line/liff").default> {
   return liffInstance
 }
 
-export class RealLiffService implements LiffService {
+export class LiveLiffService implements LiffService {
   private initialized = false
 
   async initialize(liffId: string): Promise<void> {
@@ -43,7 +43,7 @@ export class RealLiffService implements LiffService {
 
   login(options?: { redirectUri?: string }): void {
     if (!liffInstance) {
-      console.warn("[RealLiff] login() called before initialize()")
+      console.warn("[LiveLiff] login() called before initialize()")
       return
     }
 
@@ -52,39 +52,19 @@ export class RealLiffService implements LiffService {
 
   logout(): void {
     if (!liffInstance) {
-      console.warn("[RealLiff] logout() called before initialize()")
+      console.warn("[LiveLiff] logout() called before initialize()")
       return
     }
 
     liffInstance.logout()
   }
 
-  async getProfile(): Promise<LiffProfile> {
-    if (!this.initialized) {
-      throw new Error("LIFF is not initialized. Call initialize() first.")
-    }
-
-    const liff = await getLiff()
-
-    if (!liff.isLoggedIn()) {
-      throw new Error("User is not logged in via LINE.")
-    }
-
-    const profile = await liff.getProfile()
-
-    return {
-      userId: profile.userId,
-      displayName: profile.displayName,
-      pictureUrl: profile.pictureUrl ?? undefined,
-    }
-  }
-
-  getAccessToken(): string | null {
+  getIDToken(): string | null {
     if (!this.initialized || !liffInstance) {
       return null
     }
 
-    return liffInstance.getAccessToken()
+    return liffInstance.getIDToken()
   }
 
   isInClient(): boolean {

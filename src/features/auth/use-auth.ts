@@ -32,11 +32,8 @@ export function useRequireAuth(): { user: AuthUser | null } {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // 只有真的無法自動登入（不在 LINE App 內 / 設定缺失 / bootstrap 失敗）才導頁。
-    // "loading" 跟 "redirecting" 期間維持現狀（消費端顯示 Spinner），
-    // 不能在 liff.login() 的自動 redirect 完成前搶先把使用者導去 /login。
-    // 帶上 next 參數（含 query string）記住原本想去的頁面，登入完成後導回去。
-    if (status === "out-of-client") {
+    // loading/redirecting 期間不能導頁，會搶在 liff.login() 的自動 redirect 完成前跳走
+    if (status === "out-of-client" || status === "error") {
       const search = searchParams.toString()
       const next = search ? `${pathname}?${search}` : pathname
 

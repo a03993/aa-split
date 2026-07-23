@@ -115,6 +115,24 @@ describe("GroupView", () => {
     expect(screen.getByTestId("claim-dialog")).toHaveAttribute("data-open", "true")
   })
 
+  it("user 從 null 解析為已認領成員後，ClaimDialog 不會卡在開啟狀態（避免 user 載入前的誤判殘留）", () => {
+    const bundle = makeBundle([
+      makeMember("m-owner", "user-owner"),
+      makeMember("m-self", "user-self"),
+    ])
+    useBookBundleMock.mockReturnValue({ data: bundle, error: null, isPending: false })
+
+    useRequireAuthMock.mockReturnValue({ user: null })
+    const { rerender } = render(<GroupView bookId="book-1" />)
+    // user 為 null 時整個元件回傳 null，畫面上不該有任何東西
+    expect(screen.queryByTestId("claim-dialog")).not.toBeInTheDocument()
+
+    useRequireAuthMock.mockReturnValue({ user: { id: "user-self" } })
+    rerender(<GroupView bookId="book-1" />)
+
+    expect(screen.getByTestId("claim-dialog")).toHaveAttribute("data-open", "false")
+  })
+
   it("目前使用者已認領時，不自動開啟 ClaimDialog", () => {
     useBookBundleMock.mockReturnValue({
       data: makeBundle([makeMember("m-owner", "user-owner"), makeMember("m-self", "user-self")]),

@@ -42,4 +42,12 @@ describe("auth.store", () => {
     expect(state.user).toBeNull()
     expect(state.status).toBe("out-of-client")
   })
+
+  it("setError() 後 user 為 null、status 為 error", () => {
+    useAuthStore.getState().setAuthenticated(mockUser)
+    useAuthStore.getState().setError()
+    const state = useAuthStore.getState()
+    expect(state.user).toBeNull()
+    expect(state.status).toBe("error")
+  })
 })
