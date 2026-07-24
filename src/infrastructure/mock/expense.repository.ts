@@ -8,7 +8,7 @@ import type {
   ExpenseRow,
   ExpenseSplitRow,
   ExpenseWithDetails,
-  MemberRow,
+  Member,
 } from "@/types/app.types"
 
 import { _mockBooks, _mockMembers } from "./book.repository"
@@ -16,7 +16,7 @@ import { MOCK_EXPENSES, MOCK_EXPENSE_SPLITS } from "./mock-data"
 
 const expenses: ExpenseRow[] = MOCK_EXPENSES.map((e) => ({ ...e }))
 const splits: ExpenseSplitRow[] = MOCK_EXPENSE_SPLITS.map((s) => ({ ...s }))
-const members: MemberRow[] = _mockMembers
+const members: Member[] = _mockMembers
 
 function delay(): Promise<void> {
   return new Promise((r) => setTimeout(r, 50))
@@ -36,7 +36,7 @@ function applyPendingCategory(bookId: string, category: Category): void {
   book.custom_categories = [...book.custom_categories, category]
 }
 
-function requireMember(memberId: string): MemberRow {
+function requireMember(memberId: string): Member {
   const member = members.find((m) => m.id === memberId)
 
   if (!member) {

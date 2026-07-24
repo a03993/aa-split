@@ -13,7 +13,7 @@ export class SupabaseMemberRepository implements MemberRepository {
       .select(
         `
         *,
-        profile:profiles!members_profile_id_fkey (*)
+        profile:profiles!members_profile_id_fkey (id, display_name, avatar_url)
       `,
       )
       .eq("book_id", bookId)

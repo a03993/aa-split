@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 
 import { format } from "date-fns"
 
+import { MemberAvatar } from "@/components/member-avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +15,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePickerDialog } from "@/components/ui/date-picker-dialog"
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select"
 import { TimePickerDialog } from "@/components/ui/time-picker-dialog"
 import type { UpdateExpenseInput } from "@/domain/expense/expense.repository"
+import { getDisplayName } from "@/domain/member"
 import { CategoryPickerDialog } from "@/features/expenses/components/category-picker-dialog"
 import { CustomSplit, EqualSplit } from "@/features/expenses/components/participant"
 import { SPLIT_MODES, useExpenseForm } from "@/features/expenses/use-expense-form"
@@ -179,7 +180,7 @@ function ReadMode({
 
         <div className="flex flex-col gap-0.5 text-sm">
           <span className="text-xs text-muted-foreground">付款人</span>
-          <span>{expense.payer.display_name}</span>
+          <span>{getDisplayName(expense.payer)}</span>
         </div>
 
         <div className="flex flex-col gap-2 text-sm">
@@ -191,17 +192,12 @@ function ReadMode({
               return (
                 <div key={split.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Avatar size="sm">
-                      {member?.profile?.avatar_url && (
-                        <AvatarImage src={member.profile.avatar_url} />
-                      )}
-                      <AvatarFallback>
-                        {(member?.display_name ?? split.member.display_name)
-                          .charAt(0)
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{member?.display_name ?? split.member.display_name}</span>
+                    <MemberAvatar
+                      member={member}
+                      fallbackLabel={split.member.display_name}
+                      size="sm"
+                    />
+                    <span>{member ? getDisplayName(member) : split.member.display_name}</span>
                   </div>
                   <span className="font-medium">
                     {formatCurrency(Number(split.amount), currency)}
@@ -440,15 +436,8 @@ function EditMode({
                 {members.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     <div className="flex items-center gap-2">
-                      <Avatar size="sm">
-                        {member.profile?.avatar_url && (
-                          <AvatarImage src={member.profile.avatar_url} />
-                        )}
-                        <AvatarFallback>
-                          {member.display_name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      {member.display_name}
+                      <MemberAvatar member={member} size="sm" />
+                      {getDisplayName(member)}
                     </div>
                   </SelectItem>
                 ))}

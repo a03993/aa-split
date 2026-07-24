@@ -5,6 +5,7 @@ import { useMemo, useState } from "react"
 import { Calculator } from "lucide-react"
 import { toast } from "sonner"
 
+import { MemberAvatar } from "@/components/member-avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -35,6 +35,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { getDisplayName } from "@/domain/member"
 import type { Transfer } from "@/domain/settlement/settlement.calculator"
 import { CURRENCIES } from "@/lib/currencies"
 import { formatCurrency } from "@/lib/format-currency"
@@ -78,7 +79,8 @@ export function SettlementSheet({
     .filter(({ balance }) => balance !== 0)
 
   function getMemberName(id: string) {
-    return memberMap.get(id)?.display_name ?? id
+    const member = memberMap.get(id)
+    return member ? getDisplayName(member) : id
   }
 
   // 已結算：讀取當初存下的匯率顯示；未結算：讀取使用者目前輸入中的匯率。
@@ -198,26 +200,20 @@ export function SettlementSheet({
                       className="flex items-center justify-between py-1.5"
                     >
                       <div className="flex items-center gap-2 text-sm">
-                        <Avatar size="sm">
-                          {fromMember?.profile?.avatar_url && (
-                            <AvatarImage src={fromMember.profile.avatar_url} />
-                          )}
-                          <AvatarFallback>
-                            {getMemberName(transfer.fromMemberId).charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <MemberAvatar
+                          member={fromMember}
+                          fallbackLabel={getMemberName(transfer.fromMemberId)}
+                          size="sm"
+                        />
                         <span className="font-medium text-foreground">
                           {getMemberName(transfer.fromMemberId)}
                         </span>
                         <span className="text-muted-foreground">→</span>
-                        <Avatar size="sm">
-                          {toMember?.profile?.avatar_url && (
-                            <AvatarImage src={toMember.profile.avatar_url} />
-                          )}
-                          <AvatarFallback>
-                            {getMemberName(transfer.toMemberId).charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <MemberAvatar
+                          member={toMember}
+                          fallbackLabel={getMemberName(transfer.toMemberId)}
+                          size="sm"
+                        />
                         <span className="font-medium text-foreground">
                           {getMemberName(transfer.toMemberId)}
                         </span>
@@ -368,11 +364,8 @@ function BalanceItem({
   return (
     <div className="flex items-center justify-between py-1.5">
       <div className="flex items-center gap-2">
-        <Avatar size="md">
-          {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-          <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <span className="text-base font-normal text-foreground">{member.display_name}</span>
+        <MemberAvatar member={member} />
+        <span className="text-base font-normal text-foreground">{getDisplayName(member)}</span>
       </div>
       <div className="flex flex-col items-end">
         <span

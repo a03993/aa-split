@@ -32,6 +32,7 @@ function makeExpense(
       display_name: "test",
       profile_id: null,
       created_at: "",
+      profile: null,
     },
     expense_splits: splits.map((s) => ({
       id: `split-${Math.random()}`,

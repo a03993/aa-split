@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { Plus } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MemberAvatar } from "@/components/member-avatar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DatePickerDialog } from "@/components/ui/date-picker-dialog"
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet"
 import { TimePickerDialog } from "@/components/ui/time-picker-dialog"
 import type { CreateExpenseInput } from "@/domain/expense/expense.repository"
+import { getDisplayName } from "@/domain/member"
 import { CategoryPickerDialog } from "@/features/expenses/components/category-picker-dialog"
 import { CustomSplit, EqualSplit } from "@/features/expenses/components/participant"
 import { SPLIT_MODES, useExpenseForm } from "@/features/expenses/use-expense-form"
@@ -272,15 +273,8 @@ export function AddExpenseSheet({
                   {members.map((member) => (
                     <SelectItem key={member.id} value={member.id}>
                       <div className="flex items-center gap-2">
-                        <Avatar size="sm">
-                          {member.profile?.avatar_url && (
-                            <AvatarImage src={member.profile.avatar_url} />
-                          )}
-                          <AvatarFallback>
-                            {member.display_name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        {member.display_name}
+                        <MemberAvatar member={member} size="sm" />
+                        {getDisplayName(member)}
                       </div>
                     </SelectItem>
                   ))}

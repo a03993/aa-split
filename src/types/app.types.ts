@@ -35,8 +35,11 @@ export type ExpenseSplitUpdate = TablesUpdate<"expense_splits">
 export type SettlementRow = Tables<"settlements">
 export type SettlementInsert = TablesInsert<"settlements">
 
+// 同帳本成員互看的是安全欄位子集（RLS 只放行這幾欄），不是完整 profile row
+export type PublicProfile = Pick<ProfileRow, "id" | "display_name" | "avatar_url">
+
 export interface Member extends MemberRow {
-  profile: ProfileRow | null
+  profile: PublicProfile | null
 }
 
 export interface BookWithMembers extends BookRow {
@@ -44,7 +47,7 @@ export interface BookWithMembers extends BookRow {
 }
 
 export interface ExpenseWithDetails extends ExpenseRow {
-  payer: MemberRow
+  payer: Member
   expense_splits: (ExpenseSplitRow & { member: MemberRow })[]
 }
 

@@ -4,13 +4,8 @@ import Link from "next/link"
 
 import { format, parseISO } from "date-fns"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { MemberAvatar } from "@/components/member-avatar"
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { isSettled } from "@/domain/book"
 import type { BookWithMembers } from "@/types/app.types"
@@ -38,10 +33,7 @@ export function BookCard({ book, href }: BookCardProps) {
       <div className="flex w-full items-center justify-between">
         <AvatarGroup>
           {visibleMembers.map((member) => (
-            <Avatar key={member.id} size="sm">
-              {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-              <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
+            <MemberAvatar key={member.id} member={member} size="sm" />
           ))}
           {book.members.length > MAX_VISIBLE_MEMBERS && (
             <AvatarGroupCount>+{book.members.length - MAX_VISIBLE_MEMBERS}</AvatarGroupCount>

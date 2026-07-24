@@ -4,9 +4,10 @@ import { useState } from "react"
 
 import { Minus, Plus } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MemberAvatar } from "@/components/member-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getDisplayName } from "@/domain/member"
 import type { useExpenseForm } from "@/features/expenses/use-expense-form"
 import { getCurrencySymbol } from "@/lib/currencies"
 import { cn } from "@/lib/utils"
@@ -27,14 +28,12 @@ export function EqualSplit({
       className="flex flex-col items-center gap-1 rounded-lg p-2 active:bg-muted/50"
       onClick={onToggle}
     >
-      <Avatar
+      <MemberAvatar
+        member={member}
         className={cn(checked && "ring-2 ring-black ring-offset-1", !checked && "opacity-40")}
-      >
-        {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-        <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-      </Avatar>
+      />
       <span className={cn("text-sm", !checked && "text-muted-foreground")}>
-        {member.display_name}
+        {getDisplayName(member)}
       </span>
     </button>
   )
@@ -113,18 +112,16 @@ function AmountItem({
 
   return (
     <div className="flex w-full items-center gap-2 rounded-lg pl-2">
-      <Avatar
+      <MemberAvatar
+        member={member}
         size="sm"
         className={cn(
           isParticipant && "ring-2 ring-black ring-offset-1",
           !isParticipant && "opacity-40",
         )}
-      >
-        {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-        <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-      </Avatar>
+      />
       <span className={cn("flex-1 truncate text-sm", !isParticipant && "opacity-40")}>
-        {member.display_name}
+        {getDisplayName(member)}
       </span>
       <div className="flex items-center gap-1.5">
         <div className="flex items-center gap-2">

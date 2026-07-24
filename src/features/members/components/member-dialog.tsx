@@ -5,6 +5,7 @@ import { useState } from "react"
 import { CircleMinus, CornerDownLeft, LogOut, Unlink2, Users, X } from "lucide-react"
 import { toast } from "sonner"
 
+import { MemberAvatar } from "@/components/member-avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge, badgeVariants } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { getDisplayName } from "@/domain/member"
 import { usePendingNameList } from "@/features/members/use-pending-name-list"
 import { cn } from "@/lib/utils"
 import type { Member } from "@/types/app.types"
@@ -249,7 +250,7 @@ export function MemberDialog({
           <AlertDialogHeader>
             <AlertDialogTitle>確認移除成員</AlertDialogTitle>
             <AlertDialogDescription>
-              確定要移除「{memberToRemove?.display_name}」嗎？此操作無法復原。
+              確定要移除「{memberToRemove && getDisplayName(memberToRemove)}」嗎？此操作無法復原。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -301,11 +302,8 @@ function MemberItem({
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex items-center gap-2">
-        <Avatar size="md">
-          {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-          <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <span className="text-base font-normal text-foreground">{member.display_name}</span>
+        <MemberAvatar member={member} />
+        <span className="text-base font-normal text-foreground">{getDisplayName(member)}</span>
       </div>
 
       <div className="flex items-center gap-1">

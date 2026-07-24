@@ -1,8 +1,9 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MemberAvatar } from "@/components/member-avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { getDisplayName } from "@/domain/member"
 import type { Member } from "@/types/app.types"
 
 export type ClaimDialogTrigger = "entry" | "add-expense"
@@ -57,13 +58,8 @@ export function ClaimDialog({
               className="flex h-auto w-full items-center justify-start gap-3 rounded-xl p-4 text-left"
               onClick={() => onClaim(member.id)}
             >
-              <Avatar size="md">
-                {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-                <AvatarFallback className="font-medium text-foreground">
-                  {member.display_name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-medium">{member.display_name}</span>
+              <MemberAvatar member={member} />
+              <span className="font-medium">{getDisplayName(member)}</span>
             </Button>
           ))}
 

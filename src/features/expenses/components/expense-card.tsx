@@ -1,5 +1,6 @@
 "use client"
 
+import { getDisplayName } from "@/domain/member"
 import { getCategoryIcon } from "@/lib/categories"
 import { formatCurrency } from "@/lib/format-currency"
 import type { Category, ExpenseWithDetails } from "@/types/app.types"
@@ -39,7 +40,7 @@ export function ExpenseCard({
 
       <div className="flex-1">
         <p className="truncate font-medium text-foreground">{expense.title}</p>
-        <p className="text-xs text-muted-foreground">{expense.payer.display_name} 付</p>
+        <p className="text-xs text-muted-foreground">{getDisplayName(expense.payer)} 付</p>
       </div>
 
       <div className="shrink-0 text-right">

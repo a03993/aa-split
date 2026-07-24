@@ -6,13 +6,8 @@ import { notFound, useRouter } from "next/navigation"
 
 import { toast } from "sonner"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarGroup,
-  AvatarGroupCount,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { MemberAvatar } from "@/components/member-avatar"
+import { AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { isOwner, isSettled } from "@/domain/book"
@@ -290,10 +285,7 @@ export function GroupView({ bookId }: GroupViewProps) {
     <Button variant="ghost" className="-ml-2 -mr-2">
       <AvatarGroup>
         {visibleMembers.map((member) => (
-          <Avatar key={member.id} size="md">
-            {member.profile?.avatar_url && <AvatarImage src={member.profile.avatar_url} />}
-            <AvatarFallback>{member.display_name.charAt(0).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <MemberAvatar key={member.id} member={member} />
         ))}
         {extraCount > 0 && <AvatarGroupCount>+{extraCount}</AvatarGroupCount>}
       </AvatarGroup>
