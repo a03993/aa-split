@@ -7,7 +7,7 @@ export interface ShareService {
   shareToLine(bookId: string, bookName: string): Promise<boolean>
 }
 
-const SHARE_INVITE_LABEL = "邀你一起來 AA"
+export const SHARE_INVITE_LABEL = "邀你一起來 AA"
 
 function buildShareText(bookName: string): string {
   return `${SHARE_INVITE_LABEL}：${bookName}`
