@@ -194,7 +194,11 @@ export function GroupView({ bookId }: GroupViewProps) {
     }
 
     try {
-      await shareService.shareToLine(bookId, book.name)
+      const shared = await shareService.shareToLine(bookId, book.name)
+
+      if (shared) {
+        toast.success("已分享邀請連結")
+      }
     } catch (err) {
       console.error(err)
       toast.error("分享失敗，請稍後再試")

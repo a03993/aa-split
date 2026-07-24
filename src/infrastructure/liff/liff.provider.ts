@@ -18,6 +18,12 @@ export interface LiffService {
 
   isInClient(): boolean
 
-  /** 開啟 LINE 的分享選單，只能在 isInClient() 是 true 時用 */
-  shareMessage(messages: unknown[]): Promise<void>
+  /** 確認指定 API（如 "shareTargetPicker"）在目前環境是否可用，呼叫該 API 前應先檢查 */
+  isApiAvailable(apiName: string): boolean
+
+  /**
+   * 開啟 LINE 的分享選單，只能在 isInClient() 且 isApiAvailable("shareTargetPicker") 都是 true 時用
+   * 回傳 true 代表使用者選了對象並送出，false 代表使用者取消
+   */
+  shareMessage(messages: unknown[]): Promise<boolean>
 }

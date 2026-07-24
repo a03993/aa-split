@@ -75,7 +75,15 @@ export class LiveLiffService implements LiffService {
     return liffInstance.isInClient()
   }
 
-  async shareMessage(messages: unknown[]): Promise<void> {
+  isApiAvailable(apiName: string): boolean {
+    if (!this.initialized || !liffInstance) {
+      return false
+    }
+
+    return liffInstance.isApiAvailable(apiName)
+  }
+
+  async shareMessage(messages: unknown[]): Promise<boolean> {
     if (!this.initialized) {
       throw new Error("LIFF is not initialized. Call initialize() first.")
     }
@@ -86,6 +94,14 @@ export class LiveLiffService implements LiffService {
       throw new Error("shareMessage is only available inside the LINE client.")
     }
 
-    await liff.shareTargetPicker(messages as Parameters<typeof liff.shareTargetPicker>[0])
+    if (!liff.isApiAvailable("shareTargetPicker")) {
+      throw new Error("shareTargetPicker is not available in this environment.")
+    }
+
+    const result = await liff.shareTargetPicker(
+      messages as Parameters<typeof liff.shareTargetPicker>[0],
+    )
+
+    return result?.status === "success"
   }
 }

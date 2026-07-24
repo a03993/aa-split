@@ -26,7 +26,13 @@ export class LocalLiffService implements LiffService {
     return false
   }
 
-  async shareMessage(messages: unknown[]): Promise<void> {
+  isApiAvailable(apiName: string): boolean {
+    console.log(`[LocalLiff] isApiAvailable called with apiName="${apiName}" — always false`)
+    return false
+  }
+
+  async shareMessage(messages: unknown[]): Promise<boolean> {
     console.log("[LocalLiff] shareMessage called with messages:", messages)
+    return true
   }
 }
